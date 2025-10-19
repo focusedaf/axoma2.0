@@ -64,6 +64,8 @@
   --radius: var(----radius);
   --hu-font-jetbrains: var(----hu-font-jetbrains);
   --hu-font-geist: var(----hu-font-geist);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-color-destructive-foreground: var(----color-destructive-foreground);
 }
 
 :root {
@@ -121,6 +123,7 @@
   --hu-ring: hsl(0, 0%, 71%);
   --color-fd-background: hsl(var(--hu-background));
   --color-fd-card: hsl(var(--hu-background));
+  --destructive-foreground: oklch(1 0 0);
 }
 
 .dark {
@@ -174,6 +177,7 @@
   --hu-ring: hsl(0, 0%, 56%);
   --color-fd-background: hsl(var(--hu-background));
   --color-fd-card: hsl(var(--hu-background));
+  --destructive-foreground: oklch(1 0 0);
 }
 
 @layer base {

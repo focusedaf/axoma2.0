@@ -5,9 +5,12 @@ import Footer from "@/components/ui-elements/landing/footer";
 import ProfessorProfileForm from "@/components/ui-elements/forms/professorProfileForm";
 import StudentProfileForm from "@/components/ui-elements/forms/studentProfileForm";
 import { Progress } from "@/components/ui/progress";
+import VerifyDocsForm from "@/components/ui-elements/forms/verifyDocs-form";
+
 const page = () => {
   return (
     <div>
+      <VerifyDocsForm/>
       {/* <StudentProfileForm/> */}
       {/* <ProfessorProfileForm/> */}
         {/* <Progress/> */}
