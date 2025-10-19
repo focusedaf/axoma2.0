@@ -12,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import LoaderSpinner from "../LoaderSpinner";
 
 export function LoginForm({
   className,
@@ -41,9 +43,25 @@ export function LoginForm({
     setShowPassword(!showPassword);
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      setIsLoading(true);
+    
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || "Error logging into account"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form>
+      <form onSubmit={handleSubmit}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-xl font-bold">Welcome to Axoma</h1>
@@ -100,7 +118,13 @@ export function LoginForm({
             </div>
           </Field>
           <Field>
-            <Button type="submit">Login</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <LoaderSpinner message="Logging In" color="black" />
+              ) : (
+                <span className="flex items-center gap-4">Login</span>
+              )}
+            </Button>
           </Field>
         </FieldGroup>
       </form>
