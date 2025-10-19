@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import LoaderSpinner from "../LoaderSpinner";
+import { Spinner } from "@/components/ui/spinner";
 
 export function RegisterForm({
   className,
@@ -50,14 +50,20 @@ export function RegisterForm({
 
     try {
       setIsLoading(true);
-     
-      router.push("/otp");
+
+      // await registerUser(formData);
+
+      toast.success("Account created successfully!");
+
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/otp");
+      }, 1500);
     } catch (error: any) {
+      setIsLoading(false);
       toast.error(
         error?.response?.data?.message || "Error in creating account"
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -146,7 +152,7 @@ export function RegisterForm({
           <Field>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
-                <LoaderSpinner message="Registering" color="black" />
+                <Spinner />
               ) : (
                 <span className="flex items-center gap-4">Register</span>
               )}

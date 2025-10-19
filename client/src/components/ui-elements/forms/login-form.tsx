@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import LoaderSpinner from "../LoaderSpinner";
+import { Spinner } from "@/components/ui/spinner";
 
 export function LoginForm({
   className,
@@ -45,17 +45,17 @@ export function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    toast.success("Logged In Successfully!");
     try {
       setIsLoading(true);
-    
-      router.push("/dashboard");
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/dashboard");
+      }, 1500);
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Error logging into account"
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -120,7 +120,7 @@ export function LoginForm({
           <Field>
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
-                <LoaderSpinner message="Logging In" color="black" />
+                <Spinner />
               ) : (
                 <span className="flex items-center gap-4">Login</span>
               )}

@@ -15,7 +15,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { toast } from "sonner";
-import LoaderSpinner from "../LoaderSpinner";
+import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 // import { verifyOtp, generateOtp } from "@/lib/api";
 // import { useAuth } from "@/components/context/AuthContext";
@@ -27,12 +27,12 @@ interface OTPFormProps extends React.ComponentProps<"div"> {
 export function OTPForm({ className, email, ...props }: OTPFormProps) {
   const router = useRouter();
   // const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [otp, setOtp] = useState("");
 
-  // Get email from localStorage if not passed as prop
   const userEmail =
     email ||
     (typeof window !== "undefined" ? localStorage.getItem("userEmail") : null);
@@ -95,10 +95,12 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
       // } else {
       //   toast.error(response.data.message);
       // }
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/onboarding/profile");
+      }, 1500);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Error verifying OTP");
-    } finally {
-      setIsVerifying(false);
     }
   };
 
@@ -161,7 +163,7 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
                 className="w-1/2"
               >
                 {isSending ? (
-                  <LoaderSpinner message="Sending..." color="white" />
+                  <Spinner />
                 ) : resendTimer > 0 ? (
                   `Resend in ${resendTimer}s`
                 ) : (
@@ -175,11 +177,7 @@ export function OTPForm({ className, email, ...props }: OTPFormProps) {
                 type="submit"
                 disabled={isVerifying || otp.length !== 6}
               >
-                {isVerifying ? (
-                  <LoaderSpinner message="Verifying..." color="white" />
-                ) : (
-                  "Verify"
-                )}
+                {isVerifying ? <Spinner /> : "Verify"}
               </Button>
             </Field>
           </FieldGroup>
