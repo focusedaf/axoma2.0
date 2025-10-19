@@ -1,175 +1,55 @@
-"use client"
-
-import * as React from "react"
+"use client";
+import * as React from "react";
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
-
-import { NavMain } from "@/components/ui-elements/sidebar/nav-main"
-import { NavProjects } from "@/components/ui-elements/sidebar/nav-projects"
-import { NavUser } from "@/components/ui-elements/sidebar/nav-user"
-import { TeamSwitcher } from "@/components/ui-elements/sidebar/team-switcher"
+  IconSend,
+  IconUsers,
+  IconX,
+  IconHistory,
+  IconSquare,
+  IconHome,
+  IconWallet,
+  IconShield,
+} from "@tabler/icons-react";
+import { NavMain } from "@/components/ui-elements/sidebar/nav-main";
+import { NavUser } from "@/components/ui-elements/sidebar/nav-user";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
-// This is sample data.
+
 const data = {
   user: {
-    name: "shadcn",
+    name: "morpheus",
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
+    { title: "Home", url: "/", icon: IconHome },
+    { title: "Dashboard", url: "/dashboard", icon: IconSquare },
+   
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+    <Sidebar collapsible="offcanvas" {...props}>
+      <SidebarHeader className="flex flex-col items-center justify-center gap-2 p-4 border-b border-white/10">
+        <div className="flex items-center justify-start w-full px-2 py-1">
+          {/* <div className="flex items-center">
+            <Back />
+          </div> */}
+          <span className="font-semibold text-lg">Axoma</span>
+        </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="p-4">
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
-  )
+  );
 }

@@ -6,11 +6,13 @@ import ProfessorProfileForm from "@/components/ui-elements/forms/professorProfil
 import StudentProfileForm from "@/components/ui-elements/forms/studentProfileForm";
 import { Progress } from "@/components/ui/progress";
 import VerifyDocsForm from "@/components/ui-elements/forms/verifyDocs-form";
-
+import { AppSidebar } from "@/components/ui-elements/sidebar/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 const page = () => {
   return (
     <div>
-      <VerifyDocsForm/>
+      <SidebarProvider><AppSidebar/></SidebarProvider>
+      {/* <VerifyDocsForm/> */}
       {/* <StudentProfileForm/> */}
       {/* <ProfessorProfileForm/> */}
         {/* <Progress/> */}
