@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,17 +12,46 @@ interface Props {
 
 const Metamask = ({ className, onConnect, disabled }: Props) => {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
+
+  useEffect(() => {
+    const checkMetaMask = () => {
+      if (
+        typeof window.ethereum !== "undefined" &&
+        window.ethereum.isMetaMask
+      ) {
+        setIsMetaMaskInstalled(true);
+      } else {
+        setIsMetaMaskInstalled(false);
+      }
+    };
+
+    checkMetaMask();
+
+    const handleEthereum = () => {
+      checkMetaMask();
+    };
+
+    window.addEventListener("ethereum#initialized", handleEthereum, {
+      once: true,
+    });
+
+    setTimeout(checkMetaMask, 1000);
+
+    return () => {
+      window.removeEventListener("ethereum#initialized", handleEthereum);
+    };
+  }, []);
 
   const connectWallet = async () => {
-    if (typeof window.ethereum === "undefined") {
-      toast.error("Please install MetaMask!");
+    if (!isMetaMaskInstalled || typeof window.ethereum === "undefined") {
+      window.open("https://metamask.io", "_blank");
+      toast.info("Redirecting to MetaMask download page...");
       return;
     }
 
     try {
       setIsConnecting(true);
-
-      // Request account access
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
@@ -39,6 +68,10 @@ const Metamask = ({ className, onConnect, disabled }: Props) => {
 
       if (error.code === 4001) {
         toast.error("Connection request rejected");
+      } else if (error.code === -32002) {
+        toast.error("Connection request already pending", {
+          description: "Please check MetaMask",
+        });
       } else {
         toast.error("Failed to connect wallet");
       }
@@ -66,7 +99,11 @@ const Metamask = ({ className, onConnect, disabled }: Props) => {
       disabled={disabled || isConnecting}
     >
       <span className="relative flex gap-4 text-center z-10 text-sm sm:text-base font-semibold tracking-wide">
-        {isConnecting ? "Connecting..." : "Connect to Metamask"}
+        {isConnecting
+          ? "Connecting..."
+          : !isMetaMaskInstalled
+          ? "Install MetaMask"
+          : "Connect to MetaMask"}
         <Image
           src="/images/Metamask.png"
           alt="Metamask Icon"
