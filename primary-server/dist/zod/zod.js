@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginSchema = exports.userSchema = exports.newUser = exports.passwordSchema = exports.emailSchema = exports.walletSchema = exports.mobileSchema = exports.roleSchema = exports.lastNameSchema = exports.firstNameSchema = void 0;
+exports.setupProfileSchema = exports.loginSchema = exports.userSchema = exports.newUser = exports.passwordSchema = exports.emailSchema = exports.walletSchema = exports.mobileSchema = exports.roleSchema = exports.lastNameSchema = exports.firstNameSchema = void 0;
 const zod_1 = __importDefault(require("zod"));
 exports.firstNameSchema = zod_1.default
     .string()
@@ -60,3 +60,25 @@ exports.loginSchema = zod_1.default.object({
     email: exports.emailSchema,
     password: exports.passwordSchema,
 });
+const base = zod_1.default.object({
+    universityName: zod_1.default.string().trim(),
+    collegeName: zod_1.default.string().trim(),
+});
+const studentProfile = zod_1.default.object({
+    role: zod_1.default.literal("student"),
+    majorName: zod_1.default.string().trim(),
+    currentSem: zod_1.default.string().trim(),
+    startYear: zod_1.default.string().regex(/^\d{4}$/),
+    gradYear: zod_1.default.string().regex(/^\d{4}$/),
+});
+const professorProfile = zod_1.default.object({
+    role: zod_1.default.literal("professor"),
+    department: zod_1.default.string().trim(),
+    designation: zod_1.default.string().trim(),
+    employmentType: zod_1.default.enum(["full-time", "contract", "visiting"]),
+    joiningYear: zod_1.default.string().regex(/^\d{4}$/),
+});
+exports.setupProfileSchema = zod_1.default.discriminatedUnion("role", [
+    studentProfile.merge(base),
+    professorProfile.merge(base),
+]);

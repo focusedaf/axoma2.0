@@ -64,3 +64,29 @@ export const loginSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
 });
+
+const base = z.object({
+  universityName: z.string().trim(),
+  collegeName: z.string().trim(),
+});
+
+const studentProfile = z.object({
+  role: z.literal("student"),
+  majorName: z.string().trim(),
+  currentSem: z.string().trim(),
+  startYear: z.string().regex(/^\d{4}$/),
+  gradYear: z.string().regex(/^\d{4}$/),
+});
+
+const professorProfile = z.object({
+  role: z.literal("professor"),
+  department: z.string().trim(),
+  designation: z.string().trim(),
+  employmentType: z.enum(["full-time", "contract", "visiting"]),
+  joiningYear: z.string().regex(/^\d{4}$/),
+});
+
+export const setupProfileSchema = z.discriminatedUnion("role", [
+  studentProfile.merge(base),
+  professorProfile.merge(base),
+]);
