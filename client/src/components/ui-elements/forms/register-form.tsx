@@ -135,9 +135,9 @@ export function RegisterForm({
 
           <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
             <Field>
-              <FieldLabel htmlFor="mobile-number">Mobile Number</FieldLabel>
+              <FieldLabel htmlFor="mobileNumber">Mobile Number</FieldLabel>
               <Input
-                id="mobile-number"
+                id="mobileNumber"
                 name="mobileNumber"
                 type="tel"
                 placeholder="+91 3456789876"
