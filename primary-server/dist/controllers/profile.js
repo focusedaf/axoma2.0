@@ -1,1 +1,15 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getProfessorProfile = exports.getStudentProfile = exports.editProfessorProfile = exports.editStudentProfile = exports.setupProfessorProfile = exports.setupStudentProfile = void 0;
+const setupStudentProfile = async (req, res) => { };
+exports.setupStudentProfile = setupStudentProfile;
+const setupProfessorProfile = async (req, res) => { };
+exports.setupProfessorProfile = setupProfessorProfile;
+const editStudentProfile = async (req, res) => { };
+exports.editStudentProfile = editStudentProfile;
+const editProfessorProfile = async (req, res) => { };
+exports.editProfessorProfile = editProfessorProfile;
+const getStudentProfile = async (req, res) => { };
+exports.getStudentProfile = getStudentProfile;
+const getProfessorProfile = async (req, res) => { };
+exports.getProfessorProfile = getProfessorProfile;

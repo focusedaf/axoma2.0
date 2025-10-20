@@ -12,18 +12,88 @@ import { authMiddleware } from "../middleware/auth";
 
 const authRouter = express.Router();
 
-authRouter.post("/register-student", studentRegistration);
 
-authRouter.post("/register-professor", professorRegistration);
+authRouter.post(
+  "/register-student",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await studentRegistration(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-authRouter.post("/login-student", studentLogin);
 
-authRouter.post("/login-professor", professorLogin);
+authRouter.post(
+  "/register-professor",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await professorRegistration(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-authRouter.get("/me", authMiddleware, me);
 
-authRouter.post("/refresh", refreshTokens);
+authRouter.post(
+  "/login-student",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await studentLogin(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
-authRouter.post("/logout", logoutUser);
+authRouter.post(
+  "/login-professor",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await professorLogin(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
+authRouter.get(
+  "/me",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await me(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
+authRouter.post(
+  "/refresh",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await refreshTokens(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+
+authRouter.post(
+  "/logout",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await logoutUser(req, res);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 export default authRouter;
