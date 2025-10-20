@@ -14,7 +14,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 
-const StudentProfileForm = ({ className, ...props }: React.ComponentProps<"div">) => {
+const StudentProfileForm = ({
+  className,
+  ...props
+}: React.ComponentProps<"div">) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     universityName: "",
@@ -25,14 +28,7 @@ const StudentProfileForm = ({ className, ...props }: React.ComponentProps<"div">
     gradYear: "",
   });
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
+ 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -122,29 +118,10 @@ const StudentProfileForm = ({ className, ...props }: React.ComponentProps<"div">
                 <Input
                   id="startYear"
                   name="startYear"
-                  type="date"
-                  value={
-                    formData.startYear
-                      ? new Date(
-                          formData.startYear.split("-").reverse().join("-")
-                        )
-                          .toISOString()
-                          .split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const formattedDate = formatDate(e.target.value);
-                    setFormData((prev) => ({
-                      ...prev,
-                      startYear: formattedDate,
-                    }));
-                  }}
-                  onClick={() =>
-                    (
-                      document.getElementById("startYear") as HTMLInputElement
-                    )?.showPicker?.()
-                  }
-                  className="pr-8"
+                  type="text"
+                  placeholder="YYYY"
+                  value={formData.startYear}
+                  onChange={handleInputChange}
                   required
                 />
               </div>
@@ -158,29 +135,10 @@ const StudentProfileForm = ({ className, ...props }: React.ComponentProps<"div">
                 <Input
                   id="gradYear"
                   name="gradYear"
-                  type="date"
-                  value={
-                    formData.gradYear
-                      ? new Date(
-                          formData.gradYear.split("-").reverse().join("-")
-                        )
-                          .toISOString()
-                          .split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const formattedDate = formatDate(e.target.value);
-                    setFormData((prev) => ({
-                      ...prev,
-                      gradYear: formattedDate,
-                    }));
-                  }}
-                  onClick={() =>
-                    (
-                      document.getElementById("gradYear") as HTMLInputElement
-                    )?.showPicker?.()
-                  }
-                  className="pr-8"
+                  type="text"
+                  placeholder="YYYY"
+                  value={formData.gradYear}
+                  onChange={handleInputChange}
                   required
                 />
               </div>

@@ -20,7 +20,7 @@ export default function ProfessorProfileForm({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     universityName: "",
-    employeeId: "",
+    collegeName: "",
     department: "",
     designation: "",
     employmentType: "",
@@ -65,10 +65,10 @@ export default function ProfessorProfileForm({
             </Field>
 
             <Field>
-              <FieldLabel>Employee ID / Faculty Code</FieldLabel>
+              <FieldLabel>College Name</FieldLabel>
               <Input
-                name="employeeId"
-                value={formData.employeeId}
+                name="collegeName"
+                value={formData.collegeName}
                 onChange={handleChange}
                 required
               />
@@ -105,29 +105,10 @@ export default function ProfessorProfileForm({
                 <Input
                   id="joiningDate"
                   name="joiningDate"
-                  type="date"
-                  value={
-                    formData.joiningDate
-                      ? new Date(
-                          formData.joiningDate.split("-").reverse().join("-")
-                        )
-                          .toISOString()
-                          .split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const formattedDate = formatDate(e.target.value);
-                    setFormData((prev) => ({
-                      ...prev,
-                      startYear: formattedDate,
-                    }));
-                  }}
-                  onClick={() =>
-                    (
-                      document.getElementById("joiningDate") as HTMLInputElement
-                    )?.showPicker?.()
-                  }
-                  className="pr-8"
+                  type="text"
+                  placeholder="YYYY"
+                  value={formData.joiningDate}
+                  onChange={handleChange}
                   required
                 />
               </div>

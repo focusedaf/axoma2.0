@@ -11,10 +11,10 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 const page = () => {
   return (
     <div>
-      <SidebarProvider><AppSidebar/></SidebarProvider>
+      {/* <SidebarProvider><AppSidebar/></SidebarProvider> */}
       {/* <VerifyDocsForm/> */}
-      {/* <StudentProfileForm/> */}
-      {/* <ProfessorProfileForm/> */}
+      <StudentProfileForm/>
+      <ProfessorProfileForm/>
         {/* <Progress/> */}
       {/* <Footer /> */}
       {/* <Metamask />
