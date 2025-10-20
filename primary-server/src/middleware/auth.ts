@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../utils/token"
+import prisma from "../db/db";
+import { verifyAccessToken } from "../utils/token";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -7,10 +8,11 @@ export interface AuthenticatedRequest extends Request {
     email?: string;
     firstName?: string;
     lastName?: string;
+    role?: "student" | "professor";
   };
 }
 
-export const authMiddleware = (
+export const authMiddleware = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -36,7 +38,29 @@ export const authMiddleware = (
       });
     }
 
-    req.user = decoded as AuthenticatedRequest["user"];
+    const { userId, role } = decoded as {
+      userId: string;
+      role: "student" | "professor";
+    };
+
+    const user =
+      role === "student"
+        ? await prisma.students.findUnique({ where: { id: userId } })
+        : await prisma.professors.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    req.user = {
+      userId: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+    };
 
     next();
   } catch (error) {

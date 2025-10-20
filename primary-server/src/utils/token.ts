@@ -2,10 +2,12 @@ import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 export interface AccessTokenPayload extends JwtPayload {
   userId: string;
+  role: "student" | "professor";
 }
 
 export interface RefreshTokenPayload extends JwtPayload {
   userId: string;
+  role: "student" | "professor";
 }
 
 export const hashPassword = async (password: string) => {
