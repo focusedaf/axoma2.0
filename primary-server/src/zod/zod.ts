@@ -65,6 +65,7 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+// Profile validation
 const base = z.object({
   universityName: z.string().trim(),
   collegeName: z.string().trim(),

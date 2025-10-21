@@ -60,6 +60,7 @@ exports.loginSchema = zod_1.default.object({
     email: exports.emailSchema,
     password: exports.passwordSchema,
 });
+// Profile validation
 const base = zod_1.default.object({
     universityName: zod_1.default.string().trim(),
     collegeName: zod_1.default.string().trim(),
