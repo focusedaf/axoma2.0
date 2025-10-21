@@ -9,14 +9,15 @@ import VerifyDocsForm from "@/components/ui-elements/forms/verifyDocs-form";
 import { AppSidebar } from "@/components/ui-elements/sidebar/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/ui-elements/site-header";
-
+import Navbar from "@/components/ui-elements/landing/navbar";
 const page = () => {
   return (
     <div>
-      <SidebarProvider>
+      <Navbar/>
+      {/* <SidebarProvider>
         <SiteHeader />
-        {/* <AppSidebar /> */}
-      </SidebarProvider>
+        <AppSidebar />
+      </SidebarProvider> */}
       {/* <VerifyDocsForm/> */}
       {/* <StudentProfileForm/>
       <ProfessorProfileForm/> */}
