@@ -8,14 +8,19 @@ import { Progress } from "@/components/ui/progress";
 import VerifyDocsForm from "@/components/ui-elements/forms/verifyDocs-form";
 import { AppSidebar } from "@/components/ui-elements/sidebar/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { SiteHeader } from "@/components/ui-elements/site-header";
+
 const page = () => {
   return (
     <div>
-      {/* <SidebarProvider><AppSidebar/></SidebarProvider> */}
+      <SidebarProvider>
+        <SiteHeader />
+        {/* <AppSidebar /> */}
+      </SidebarProvider>
       {/* <VerifyDocsForm/> */}
-      <StudentProfileForm/>
-      <ProfessorProfileForm/>
-        {/* <Progress/> */}
+      {/* <StudentProfileForm/>
+      <ProfessorProfileForm/> */}
+      {/* <Progress/> */}
       {/* <Footer /> */}
       {/* <Metamask />
       <RoleSelector /> */}
