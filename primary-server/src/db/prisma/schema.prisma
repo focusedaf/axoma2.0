@@ -28,6 +28,8 @@ model Students {
   updatedAt          DateTime @updatedAt
   @@map("Students") 
   studentProfile     StudentProfile[]
+  studentDoc         StudentDocument[]
+  
 }
 
 model Professors {
@@ -44,6 +46,8 @@ model Professors {
   updatedAt          DateTime @updatedAt
   @@map("Professors") 
   professorProfile   ProfessorProfile[]
+  professorDoc        ProfessorDocument[]
+  
 }
 
  
@@ -83,4 +87,44 @@ model ProfessorProfile{
   professorID       String  @unique
   professor         Professors @relation(fields: [professorID], references: [id])
   
+}
+
+model StudentDocument {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     Students @relation(fields: [studentId], references: [id])
+  docType     StudentDocType
+  url         String
+  status      VerificationStatus @default(pending)
+  rejectionReason   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum StudentDocType {
+  id_card
+  fee_receipt
+}
+
+model ProfessorDocument {
+  id           String   @id @default(uuid())
+  professorId  String
+  professor    Professors @relation(fields: [professorId], references: [id])
+  docType      ProfessorDocType
+  url          String
+  status       VerificationStatus @default(pending)
+  rejectionReason   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum ProfessorDocType {
+  id_card
+  employment_letter
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
 }
