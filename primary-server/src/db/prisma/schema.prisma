@@ -14,8 +14,73 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
+model Students {
+  id                 String   @id @default(uuid()) 
+  email              String   @unique
+  firstName          String  
+  lastName           String 
+  mobileNumber       String   @unique     
+  password           String
+  walletAddress      String   @unique
+  isVerified         Boolean  @default(false)
+  refreshToken       String?  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@map("Students") 
+  studentProfile     StudentProfile[]
+}
+
+model Professors {
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  firstName          String
+  lastName           String
+  mobileNumber       String   @unique 
+  password           String
+  walletAddress      String   @unique
+  isVerified         Boolean  @default(false)
+  refreshToken       String?  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@map("Professors") 
+  professorProfile   ProfessorProfile[]
+}
+
+ 
+
+model StudentProfile{
+  id                String @id @default(uuid())
+  universityName    String
+  collegeName       String
+  majorName         String
+  currentSem        String
+  startYear         String
+  gradYear          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  //relation
+  studentID         String  @unique
+  student           Students @relation(fields: [studentID], references: [id])
+  
+}
+
+enum EmploymentType {
+  full_time
+  visiting
+  contract
+}
+model ProfessorProfile{
+  id                String @id @default(uuid())
+  universityName    String
+  collegeName       String
+  department        String
+  designation       String
+  employmentType    EmploymentType  @default(full_time)
+  joiningYear       String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  //relation
+  professorID       String  @unique
+  professor         Professors @relation(fields: [professorID], references: [id])
+  
 }
