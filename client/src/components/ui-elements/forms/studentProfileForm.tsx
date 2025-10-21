@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import axios from "axios";
 
 interface StudentProfile {
@@ -24,7 +24,6 @@ const StudentProfileForm = ({
   className?: string;
   existingData?: StudentProfile;
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<StudentProfile>({
     universityName: "",
     collegeName: "",
@@ -33,29 +32,38 @@ const StudentProfileForm = ({
     startYear: "",
     gradYear: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (existingData) setFormData(existingData);
   }, [existingData]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+ const handleSubmit = async (e: React.FormEvent) => {
+   e.preventDefault();
+   setIsLoading(true);
 
-    try {
-      // await axios.put("", formData);
-      toast.success("Profile updated successfully!");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Error updating profile");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+   try {
+     let res;
+     if (existingData) {
+       res = await axios.patch("", formData);
+       toast.success("Profile updated successfully!");
+     } else {
+       res = await axios.post("", formData);
+       toast.success("Profile created successfully!");
+     }
+     setFormData(res.data.data);
+   } catch (err: any) {
+     console.error(err);
+     toast.error(err?.response?.data?.message || "Error saving profile");
+   } finally {
+     setIsLoading(false);
+   }
+ };
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
@@ -67,7 +75,7 @@ const StudentProfileForm = ({
               id="universityName"
               name="universityName"
               value={formData.universityName}
-              onChange={handleInputChange}
+              onChange={handleChange}
             />
           </Field>
           <Field>
@@ -76,7 +84,7 @@ const StudentProfileForm = ({
               id="collegeName"
               name="collegeName"
               value={formData.collegeName}
-              onChange={handleInputChange}
+              onChange={handleChange}
             />
           </Field>
         </FieldGroup>
@@ -88,7 +96,7 @@ const StudentProfileForm = ({
               id="majorName"
               name="majorName"
               value={formData.majorName}
-              onChange={handleInputChange}
+              onChange={handleChange}
             />
           </Field>
           <Field>
@@ -97,7 +105,7 @@ const StudentProfileForm = ({
               id="currentSem"
               name="currentSem"
               value={formData.currentSem}
-              onChange={handleInputChange}
+              onChange={handleChange}
             />
           </Field>
         </FieldGroup>
@@ -109,7 +117,7 @@ const StudentProfileForm = ({
               id="startYear"
               name="startYear"
               value={formData.startYear}
-              onChange={handleInputChange}
+              onChange={handleChange}
               placeholder="YYYY"
             />
           </Field>
@@ -119,7 +127,7 @@ const StudentProfileForm = ({
               id="gradYear"
               name="gradYear"
               value={formData.gradYear}
-              onChange={handleInputChange}
+              onChange={handleChange}
               placeholder="YYYY"
             />
           </Field>
@@ -127,7 +135,7 @@ const StudentProfileForm = ({
 
         <Field className="flex items-center mt-4">
           <Button type="submit" disabled={isLoading} className="max-w-[150px]">
-            {isLoading ? <Spinner /> : "Submit"}
+            {isLoading ? <Spinner /> : "Save"}
           </Button>
         </Field>
       </form>

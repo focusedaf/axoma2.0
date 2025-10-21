@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import axios from "axios";
+import { toast } from "sonner";
 
 interface ProfessorProfile {
   universityName?: string;
@@ -30,7 +31,6 @@ export default function ProfessorProfileForm({
   className?: string;
   existingData?: ProfessorProfile;
 }) {
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<ProfessorProfile>({
     universityName: "",
     collegeName: "",
@@ -39,6 +39,7 @@ export default function ProfessorProfileForm({
     employmentType: "",
     joiningYear: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (existingData) setFormData(existingData);
@@ -53,9 +54,19 @@ export default function ProfessorProfileForm({
     setIsLoading(true);
 
     try {
-      // await axios.put("", formData);
+      let res;
+      if (existingData) {
+        res = await axios.patch("", formData);
+        toast.success("Profile updated successfully!");
+      } else {
+        res = await axios.post("", formData);
+        toast.success("Profile created successfully!");
+      }
+
+      setFormData(res.data.data);
     } catch (err: any) {
       console.error(err);
+      toast.error(err?.response?.data?.message || "Error saving profile");
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +74,7 @@ export default function ProfessorProfileForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit}>
         <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
           <Field>
             <FieldLabel>University Name</FieldLabel>
@@ -107,8 +118,8 @@ export default function ProfessorProfileForm({
             <FieldLabel>Joining Year</FieldLabel>
             <Input
               name="joiningYear"
-              placeholder="YYYY"
               value={formData.joiningYear}
+              placeholder="YYYY"
               onChange={handleChange}
             />
           </Field>
@@ -134,7 +145,7 @@ export default function ProfessorProfileForm({
 
         <Field className="flex items-center mt-4">
           <Button type="submit" disabled={isLoading} className="max-w-[150px]">
-            {isLoading ? <Spinner /> : "Submit"}
+            {isLoading ? <Spinner /> : "Save"}
           </Button>
         </Field>
       </form>
