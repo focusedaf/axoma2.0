@@ -1,25 +1,31 @@
 "use client";
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
+import axios from "axios";
+
+interface StudentProfile {
+  universityName?: string;
+  collegeName?: string;
+  majorName?: string;
+  currentSem?: string;
+  startYear?: string;
+  gradYear?: string;
+}
 
 const StudentProfileForm = ({
   className,
-  ...props
-}: React.ComponentProps<"div">) => {
+  existingData,
+}: {
+  className?: string;
+  existingData?: StudentProfile;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<StudentProfile>({
     universityName: "",
     collegeName: "",
     majorName: "",
@@ -28,137 +34,102 @@ const StudentProfileForm = ({
     gradYear: "",
   });
 
- 
+  useEffect(() => {
+    if (existingData) setFormData(existingData);
+  }, [existingData]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
-      setIsLoading(true);
-
-      toast.success("Profile created successfully!");
+      // await axios.put("", formData);
+      toast.success("Profile updated successfully!");
     } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Error updating profile");
+    } finally {
       setIsLoading(false);
-      toast.error(
-        error?.response?.data?.message || "Error in setting up profile"
-      );
     }
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)}>
       <form onSubmit={handleSubmit}>
-        <FieldGroup>
-          <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-            <Field>
-              <FieldLabel htmlFor="universityName">University Name</FieldLabel>
-              <Input
-                id="universityName"
-                name="universityName"
-                type="text"
-                placeholder="mumbai uni"
-                value={formData.universityName}
-                onChange={handleInputChange}
-                required
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="collegeName">College Name</FieldLabel>
-              <Input
-                id="collegeName"
-                name="collegeName"
-                type="text"
-                placeholder="ssjcoe"
-                value={formData.collegeName}
-                onChange={handleInputChange}
-                required
-              />
-            </Field>
-          </FieldGroup>
-
-          <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-            <Field>
-              <FieldLabel htmlFor="majorName">Major Name</FieldLabel>
-              <Input
-                id="majorName"
-                name="majorName"
-                type="text"
-                placeholder="CE"
-                value={formData.majorName}
-                onChange={handleInputChange}
-                required
-              />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="currentSem">Current Semester</FieldLabel>
-              <Input
-                id="currentSem"
-                name="currentSem"
-                type="text"
-                placeholder="five"
-                value={formData.currentSem}
-                onChange={handleInputChange}
-                required
-              />
-            </Field>
-          </FieldGroup>
-
-          <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-            <Field>
-              <FieldLabel htmlFor="startYear">Batch Start Year</FieldLabel>
-              <div className="relative">
-                <Input
-                  id="startYear"
-                  name="startYear"
-                  type="text"
-                  placeholder="YYYY"
-                  value={formData.startYear}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="gradYear">
-                Expected Graduation Year
-              </FieldLabel>
-              <div className="relative">
-                <Input
-                  id="gradYear"
-                  name="gradYear"
-                  type="text"
-                  placeholder="YYYY"
-                  value={formData.gradYear}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-            </Field>
-          </FieldGroup>
-
-          <Field className="flex items-center">
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="max-w-[150px]"
-            >
-              {isLoading ? (
-                <Spinner />
-              ) : (
-                <span className="flex items-center gap-4">Submit</span>
-              )}
-            </Button>
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
+          <Field>
+            <FieldLabel htmlFor="universityName">University Name</FieldLabel>
+            <Input
+              id="universityName"
+              name="universityName"
+              value={formData.universityName}
+              onChange={handleInputChange}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="collegeName">College Name</FieldLabel>
+            <Input
+              id="collegeName"
+              name="collegeName"
+              value={formData.collegeName}
+              onChange={handleInputChange}
+            />
           </Field>
         </FieldGroup>
+
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
+          <Field>
+            <FieldLabel htmlFor="majorName">Major Name</FieldLabel>
+            <Input
+              id="majorName"
+              name="majorName"
+              value={formData.majorName}
+              onChange={handleInputChange}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="currentSem">Current Semester</FieldLabel>
+            <Input
+              id="currentSem"
+              name="currentSem"
+              value={formData.currentSem}
+              onChange={handleInputChange}
+            />
+          </Field>
+        </FieldGroup>
+
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
+          <Field>
+            <FieldLabel htmlFor="startYear">Batch Start Year</FieldLabel>
+            <Input
+              id="startYear"
+              name="startYear"
+              value={formData.startYear}
+              onChange={handleInputChange}
+              placeholder="YYYY"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="gradYear">Expected Graduation Year</FieldLabel>
+            <Input
+              id="gradYear"
+              name="gradYear"
+              value={formData.gradYear}
+              onChange={handleInputChange}
+              placeholder="YYYY"
+            />
+          </Field>
+        </FieldGroup>
+
+        <Field className="flex items-center mt-4">
+          <Button type="submit" disabled={isLoading} className="max-w-[150px]">
+            {isLoading ? <Spinner /> : "Submit"}
+          </Button>
+        </Field>
       </form>
     </div>
   );
