@@ -1,14 +1,14 @@
 import { Response } from "express";
 import prisma from "../db/db";
-import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 import { AuthenticatedRequest } from "../middleware/auth";
+import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 
 export const addStudentDocs = async (
   req: AuthenticatedRequest,
   res: Response
 ) => {
   try {
-    const studentId = req.user!.userId; 
+    const studentId = req.user!.userId;
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (!files?.id_card?.[0] && !files?.fee_receipt?.[0]) {
@@ -18,7 +18,7 @@ export const addStudentDocs = async (
       });
     }
 
-    const createdDocs: any[] = [];
+    const createdDocs = [];
 
     if (files.id_card?.[0]) {
       const uploadResult = await uploadToCloudinary(
@@ -30,9 +30,10 @@ export const addStudentDocs = async (
       const doc = await prisma.studentDocument.create({
         data: {
           studentId,
-          docType: "id_card",
+          docType: "id_card", 
           url: uploadResult.url,
           status: "pending",
+
         },
       });
       createdDocs.push(doc);
@@ -74,7 +75,7 @@ export const addProfessorDocs = async (
   res: Response
 ) => {
   try {
-    const professorId = req.user!.userId; 
+    const professorId = req.user!.userId;
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (!files?.id_card?.[0] && !files?.employment_letter?.[0]) {
@@ -84,7 +85,7 @@ export const addProfessorDocs = async (
       });
     }
 
-    const createdDocs: any[] = [];
+    const createdDocs = [];
 
     if (files.id_card?.[0]) {
       const uploadResult = await uploadToCloudinary(
@@ -147,7 +148,10 @@ export const getStudentDocs = async (
       orderBy: { createdAt: "desc" },
     });
 
-    return res.status(200).json({ success: true, data: docs });
+    return res.status(200).json({
+      success: true,
+      data: docs,
+    });
   } catch (error) {
     console.error("Error fetching student docs:", error);
     return res
@@ -168,7 +172,10 @@ export const getProfessorDocs = async (
       orderBy: { createdAt: "desc" },
     });
 
-    return res.status(200).json({ success: true, data: docs });
+    return res.status(200).json({
+      success: true,
+      data: docs,
+    });
   } catch (error) {
     console.error("Error fetching professor docs:", error);
     return res

@@ -13,7 +13,7 @@ const profileRouter = express.Router();
 
 
 profileRouter.post(
-  "/setupProfile",
+  "/setup-profile",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {

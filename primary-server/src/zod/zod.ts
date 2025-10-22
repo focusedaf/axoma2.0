@@ -83,7 +83,7 @@ const professorProfile = z.object({
   role: z.literal("professor"),
   department: z.string().trim(),
   designation: z.string().trim(),
-  employmentType: z.enum(["full-time", "contract", "visiting"]),
+  employmentType: z.enum(["full_time", "contract", "visiting"]),
   joiningYear: z.string().regex(/^\d{4}$/),
 });
 

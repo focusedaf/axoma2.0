@@ -1,5 +1,4 @@
-// register,login,logout,me,refreshToken
-import express, { Request, Response } from "express";
+import { Request, Response } from "express";
 import prisma from "../db/db";
 import { newUser, loginSchema } from "../zod/zod";
 import {
@@ -11,24 +10,20 @@ import {
   verifyRefreshToken,
   hashRefreshToken,
   rotateTokens,
-  decodedAccessToken,
 } from "../utils/token";
 
 export const studentRegistration = async (req: Request, res: Response) => {
   try {
     const validation = newUser.safeParse(req.body);
-
-    if (!validation.success) {
+    if (!validation.success)
       return res
         .status(400)
         .json({ success: false, message: "Validation failed" });
-    }
 
     const {
       firstName,
       lastName,
       mobileNumber,
-      role,
       email,
       password,
       walletAddress,
@@ -37,90 +32,67 @@ export const studentRegistration = async (req: Request, res: Response) => {
     const existingStudent = await prisma.students.findUnique({
       where: { email },
     });
-
-    if (existingStudent) {
-      return res.status(409).json({
-        success: false,
-        message: "Email already in use",
-      });
-    }
+    if (existingStudent)
+      return res
+        .status(409)
+        .json({ success: false, message: "Email already in use" });
 
     const existingWallet = await prisma.students.findUnique({
       where: { walletAddress },
     });
+    if (existingWallet)
+      return res
+        .status(409)
+        .json({ success: false, message: "Wallet address already in use" });
 
-    if (existingWallet) {
-      return res.status(409).json({
-        success: false,
-        message: "Wallet address already in use",
-      });
-    }
     const hashedPwd = await hashPassword(password);
 
     const student = await prisma.students.create({
       data: {
-        firstName: firstName,
-        lastName: lastName,
-        mobileNumber: mobileNumber,
-        role: role,
-        email: email,
+        firstName,
+        lastName,
+        mobileNumber,
+        email,
         password: hashedPwd,
-        walletAddress: walletAddress,
+        walletAddress,
         isVerified: false,
       },
     });
 
-    const checkStudent = await prisma.students.findUnique({
-      where: { id: student.id },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        mobileNumber: true,
-        role: true,
-        email: true,
-        walletAddress: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
+    return res.status(201).json({
+      success: true,
+      message: "Student registered successfully",
+      student: {
+        id: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        email: student.email,
+        mobileNumber: student.mobileNumber,
+        walletAddress: student.walletAddress,
+        isVerified: student.isVerified,
+        role: "student",
+        createdAt: student.createdAt,
+        updatedAt: student.updatedAt,
       },
     });
-
-    if (!checkStudent) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Registration Process Failed" });
-    } else {
-      return res.status(201).json({
-        success: true,
-        message: "Student registered successfully",
-        student: checkStudent,
-      });
-    }
   } catch (error) {
     console.error("Student registration error:", error);
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    res.status(500).json({ success: false, message: (error as Error).message });
   }
 };
 
 export const professorRegistration = async (req: Request, res: Response) => {
   try {
     const validation = newUser.safeParse(req.body);
-
-    if (!validation.success) {
+    if (!validation.success)
       return res
         .status(400)
         .json({ success: false, message: "Validation failed" });
-    }
 
     const {
       firstName,
       lastName,
       mobileNumber,
-      role,
       email,
       password,
       walletAddress,
@@ -129,127 +101,86 @@ export const professorRegistration = async (req: Request, res: Response) => {
     const existingProfessor = await prisma.professors.findUnique({
       where: { email },
     });
-
-    if (existingProfessor) {
-      return res.status(409).json({
-        success: false,
-        message: "Email already in use",
-      });
-    }
+    if (existingProfessor)
+      return res
+        .status(409)
+        .json({ success: false, message: "Email already in use" });
 
     const existingWallet = await prisma.professors.findUnique({
       where: { walletAddress },
     });
+    if (existingWallet)
+      return res
+        .status(409)
+        .json({ success: false, message: "Wallet address already in use" });
 
-    if (existingWallet) {
-      return res.status(409).json({
-        success: false,
-        message: "Wallet address already in use",
-      });
-    }
     const hashedPwd = await hashPassword(password);
 
     const professor = await prisma.professors.create({
       data: {
-        firstName: firstName,
-        lastName: lastName,
-        mobileNumber: mobileNumber,
-        role: role,
-        email: email,
+        firstName,
+        lastName,
+        mobileNumber,
+        email,
         password: hashedPwd,
-        walletAddress: walletAddress,
+        walletAddress,
         isVerified: false,
       },
     });
 
-    const checkProfessor = await prisma.professors.findUnique({
-      where: { id: professor.id },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        mobileNumber: true,
-        role: true,
-        email: true,
-        walletAddress: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
+    return res.status(201).json({
+      success: true,
+      message: "Professor registered successfully",
+      professor: {
+        id: professor.id,
+        firstName: professor.firstName,
+        lastName: professor.lastName,
+        email: professor.email,
+        mobileNumber: professor.mobileNumber,
+        walletAddress: professor.walletAddress,
+        isVerified: professor.isVerified,
+        role: "professor",
+        createdAt: professor.createdAt,
+        updatedAt: professor.updatedAt,
       },
     });
-
-    if (!checkProfessor) {
-      return res
-        .status(500)
-        .json({ success: false, message: "Registration Process Failed" });
-    } else {
-      return res.status(201).json({
-        success: true,
-        message: "Professor registered successfully",
-        professor: checkProfessor,
-      });
-    }
   } catch (error) {
     console.error("Professor registration error:", error);
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    res.status(500).json({ success: false, message: (error as Error).message });
   }
 };
 
 export const studentLogin = async (req: Request, res: Response) => {
   try {
     const validation = loginSchema.safeParse(req.body);
-
-    if (!validation.success) {
+    if (!validation.success)
       return res
         .status(400)
-        .json({ success: false, message: "validation failed" });
-    }
+        .json({ success: false, message: "Validation failed" });
 
     const { email, password } = validation.data;
-
-    const student = await prisma.students.findUnique({
-      where: { email },
-    });
-
-    if (!student) {
+    const student = await prisma.students.findUnique({ where: { email } });
+    if (!student)
       return res
         .status(401)
         .json({ success: false, message: "Student not registered" });
-    }
 
     const isValidPwd = await verifyPassword(password, student.password);
-
-    if (!isValidPwd) {
+    if (!isValidPwd)
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
-    }
-
-    const accessTokenPayload = {
-      userId: student.id,
-      role: student.role,
-    };
-
-    const refreshTokenPayload = {
-      userId: student.id,
-      role: student.role,
-    };
 
     const accessToken = createAccessToken(
-      accessTokenPayload,
+      { userId: student.id, role: "student" },
       process.env.ACCESS_TOKEN_SECRET!,
       process.env.ACCESS_TOKEN_EXPIRY!
     );
-
     const refreshToken = createRefreshToken(
-      refreshTokenPayload,
+      { userId: student.id, role: "student" },
       process.env.REFRESH_TOKEN_SECRET!,
       process.env.REFRESH_TOKEN_EXPIRY!
     );
-
     const hashedRefreshToken = await hashRefreshToken(refreshToken);
 
     await prisma.students.update({
@@ -257,23 +188,17 @@ export const studentLogin = async (req: Request, res: Response) => {
       data: { refreshToken: hashedRefreshToken },
     });
 
-    const options = {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite:
-        process.env.NODE_ENV === "production"
-          ? ("none" as const)
-          : ("lax" as const),
+      sameSite: "lax" as const,
       path: "/",
     };
 
-    console.log("accesstoken", accessToken);
-    console.log("refreshtoken", refreshToken);
-
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json({
         success: true,
         message: "Student logged in successfully",
@@ -282,67 +207,46 @@ export const studentLogin = async (req: Request, res: Response) => {
           email: student.email,
           firstName: student.firstName,
           lastName: student.lastName,
+          role: "student",
         },
       });
   } catch (error) {
     console.error("Student login error:", error);
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    res.status(500).json({ success: false, message: (error as Error).message });
   }
 };
 
 export const professorLogin = async (req: Request, res: Response) => {
   try {
     const validation = loginSchema.safeParse(req.body);
-
-    if (!validation.success) {
+    if (!validation.success)
       return res
         .status(400)
-        .json({ success: false, message: "validation failed" });
-    }
+        .json({ success: false, message: "Validation failed" });
 
     const { email, password } = validation.data;
-
     const professor = await prisma.professors.findUnique({ where: { email } });
-
-    if (!professor) {
+    if (!professor)
       return res
         .status(401)
         .json({ success: false, message: "Professor not registered" });
-    }
 
     const isValidPwd = await verifyPassword(password, professor.password);
-
-    if (!isValidPwd) {
+    if (!isValidPwd)
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
-    }
-
-    const accessTokenPayload = {
-      userId: professor.id,
-      role: professor.role,
-    };
-
-    const refreshTokenPayload = {
-      userId: professor.id,
-      role: professor.role,
-    };
 
     const accessToken = createAccessToken(
-      accessTokenPayload,
+      { userId: professor.id, role: "professor" },
       process.env.ACCESS_TOKEN_SECRET!,
       process.env.ACCESS_TOKEN_EXPIRY!
     );
-
     const refreshToken = createRefreshToken(
-      refreshTokenPayload,
+      { userId: professor.id, role: "professor" },
       process.env.REFRESH_TOKEN_SECRET!,
       process.env.REFRESH_TOKEN_EXPIRY!
     );
-
     const hashedRefreshToken = await hashRefreshToken(refreshToken);
 
     await prisma.professors.update({
@@ -350,23 +254,17 @@ export const professorLogin = async (req: Request, res: Response) => {
       data: { refreshToken: hashedRefreshToken },
     });
 
-    const options = {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite:
-        process.env.NODE_ENV === "production"
-          ? ("none" as const)
-          : ("lax" as const),
+      sameSite: "lax" as const,
       path: "/",
     };
 
-    console.log("accesstoken", accessToken);
-    console.log("refreshtoken", refreshToken);
-
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json({
         success: true,
         message: "Professor logged in successfully",
@@ -375,33 +273,28 @@ export const professorLogin = async (req: Request, res: Response) => {
           email: professor.email,
           firstName: professor.firstName,
           lastName: professor.lastName,
+          role: "professor",
         },
       });
   } catch (error) {
     console.error("Professor login error:", error);
-    res.status(500).json({
-      success: false,
-      message: (error as Error).message,
-    });
+    res.status(500).json({ success: false, message: (error as Error).message });
   }
 };
 
-// to get the logged in user's info
+
 export const me = async (req: Request, res: Response) => {
   try {
     const token =
       req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
+    if (!token)
       return res
         .status(401)
         .json({ success: false, message: "Not authenticated" });
-    }
 
     const decoded = verifyAccessToken(token, process.env.ACCESS_TOKEN_SECRET!);
-    if (!decoded) {
+    if (!decoded)
       return res.status(401).json({ success: false, message: "Invalid token" });
-    }
 
     const { userId, role } = decoded as {
       userId: string;
@@ -418,7 +311,6 @@ export const me = async (req: Request, res: Response) => {
           lastName: true,
           mobileNumber: true,
           email: true,
-          role: true,
           walletAddress: true,
         },
       });
@@ -431,69 +323,57 @@ export const me = async (req: Request, res: Response) => {
           lastName: true,
           mobileNumber: true,
           email: true,
-          role: true,
           walletAddress: true,
         },
       });
     }
 
-    if (!user) {
+    if (!user)
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
-    }
 
-    res.status(200).json({ success: true, user });
-  } catch (err) {
-    console.error("Me error:", err);
-    res.status(500).json({ success: false, message: (err as Error).message });
+    res.status(200).json({ success: true, user: { ...user, role } });
+  } catch (error) {
+    console.error("Get current user error:", error);
+    res.status(500).json({ success: false, message: (error as Error).message });
   }
 };
 
 export const logoutUser = async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
-
     if (!refreshToken) {
       return res
         .status(400)
-        .json({ success: false, message: "No refresh token provided" });
+        .json({ success: false, message: "No refresh token found" });
     }
 
-    const decoded = verifyRefreshToken(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET!
-    );
-    if (!decoded) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid refresh token" });
-    }
-
-    const { userId, role } = decoded as {
-      userId: string;
-      role: "student" | "professor";
-    };
-
-    if (role === "student") {
+    const hashedToken = await hashRefreshToken(refreshToken);
+    const student = await prisma.students.findUnique({
+      where: { refreshToken: hashedToken },
+    });
+    if (student) {
       await prisma.students.update({
-        where: { id: userId },
+        where: { id: student.id },
         data: { refreshToken: null },
       });
     } else {
-      await prisma.professors.update({
-        where: { id: userId },
-        data: { refreshToken: null },
+      const professor = await prisma.professors.findUnique({
+        where: { refreshToken: hashedToken },
       });
+      if (professor) {
+        await prisma.professors.update({
+          where: { id: professor.id },
+          data: { refreshToken: null },
+        });
+      }
     }
 
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite:
-        process.env.NODE_ENV === "production"
-          ? ("none" as const)
-          : ("lax" as const),
+      sameSite: "lax" as const,
       path: "/",
     };
 
@@ -504,28 +384,23 @@ export const logoutUser = async (req: Request, res: Response) => {
       .json({ success: true, message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: (error as Error).message });
+    res.status(500).json({ success: false, message: (error as Error).message });
   }
 };
 
-// to refresh both access n refresh tokens
 export const refreshTokens = async (req: Request, res: Response) => {
   try {
-    const normalRefreshToken = req.cookies?.refreshToken;
-
-    if (!normalRefreshToken) {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
       return res
         .status(401)
         .json({ success: false, message: "Refresh token required" });
     }
 
     const decoded = verifyRefreshToken(
-      normalRefreshToken,
+      refreshToken,
       process.env.REFRESH_TOKEN_SECRET!
     );
-
     if (!decoded) {
       return res
         .status(401)
@@ -549,26 +424,21 @@ export const refreshTokens = async (req: Request, res: Response) => {
       });
     }
 
-    const isValidRT = await verifyPassword(
-      normalRefreshToken,
-      user.refreshToken
-    );
-    if (!isValidRT) {
+    const isValid = await verifyPassword(refreshToken, user.refreshToken);
+    if (!isValid) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid refresh token" });
     }
 
-    const newTokens = rotateTokens(
-      { userId: user.id, role: user.role },
-      { userId: user.id, role: user.role },
+    const { accessToken, refreshToken: newRefreshToken } = rotateTokens(
+      { userId: user.id, role },
+      { userId: user.id, role },
       process.env.ACCESS_TOKEN_SECRET!,
       process.env.REFRESH_TOKEN_SECRET!
     );
 
-    const hashedNewRefreshToken = await hashRefreshToken(
-      newTokens.refreshToken
-    );
+    const hashedNewRefreshToken = await hashRefreshToken(newRefreshToken);
 
     if (role === "student") {
       await prisma.students.update({
@@ -582,7 +452,7 @@ export const refreshTokens = async (req: Request, res: Response) => {
       });
     }
 
-    const options = {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite:
@@ -593,8 +463,9 @@ export const refreshTokens = async (req: Request, res: Response) => {
     };
 
     return res
-      .cookie("accessToken", newTokens.accessToken, options)
-      .cookie("refreshToken", newTokens.refreshToken, options)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", newRefreshToken, cookieOptions)
+      .status(200)
       .json({ success: true, message: "Tokens refreshed successfully" });
   } catch (error) {
     console.error("Refresh token error:", error);

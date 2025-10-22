@@ -34,13 +34,69 @@ export const setupStudentProfile = async (
       data: { ...validation.data, studentID: studentId },
     });
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Student profile created",
-        data: profile,
+    res.status(201).json({
+      success: true,
+      message: "Student profile created",
+      data: profile,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const editStudentProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const studentId = req.user!.userId;
+
+    const validation = studentPartialSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: validation.error.issues,
       });
+    }
+
+    const updated = await prisma.studentProfile.update({
+      where: { studentID: studentId },
+      data: validation.data,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Student profile updated",
+      data: updated,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getStudentProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const studentId = req.user!.userId;
+
+    const profile = await prisma.studentProfile.findUnique({
+      where: { studentID: studentId },
+    });
+    if (!profile)
+      return res
+        .status(404)
+        .json({ success: false, message: "Profile not found" });
+
+    res.status(200).json({
+      success: true,
+      message: "Student profile fetched",
+      data: profile,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -76,54 +132,16 @@ export const setupProfessorProfile = async (
       data: { ...validation.data, professorID: professorId },
     });
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Professor profile created",
-        data: profile,
-      });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
-
-export const editStudentProfile = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const studentId = req.user!.userId;
-
-    const validation = studentPartialSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues,
-      });
-    }
-
-    const updated = await prisma.studentProfile.update({
-      where: { studentID: studentId },
-      data: validation.data,
+    res.status(201).json({
+      success: true,
+      message: "Professor profile created",
+      data: profile,
     });
-
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Student profile updated",
-        data: updated,
-      });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
 
 export const editProfessorProfile = async (
   req: AuthenticatedRequest,
@@ -146,48 +164,16 @@ export const editProfessorProfile = async (
       data: validation.data,
     });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Professor profile updated",
-        data: updated,
-      });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
-
-export const getStudentProfile = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const studentId = req.user!.userId;
-
-    const profile = await prisma.studentProfile.findUnique({
-      where: { studentID: studentId },
+    res.status(200).json({
+      success: true,
+      message: "Professor profile updated",
+      data: updated,
     });
-    if (!profile)
-      return res
-        .status(404)
-        .json({ success: false, message: "Profile not found" });
-
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Student profile fetched",
-        data: profile,
-      });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
 
 export const getProfessorProfile = async (
   req: AuthenticatedRequest,
@@ -204,13 +190,11 @@ export const getProfessorProfile = async (
         .status(404)
         .json({ success: false, message: "Profile not found" });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Professor profile fetched",
-        data: profile,
-      });
+    res.status(200).json({
+      success: true,
+      message: "Professor profile fetched",
+      data: profile,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });

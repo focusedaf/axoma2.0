@@ -8,7 +8,7 @@ export interface AuthenticatedRequest extends Request {
     email?: string;
     firstName?: string;
     lastName?: string;
-    role?: "student" | "professor";
+    role: "student" | "professor";
   };
 }
 
@@ -23,19 +23,17 @@ export const authMiddleware = async (
       req.headers.authorization?.replace("Bearer ", "");
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Access token required",
-      });
+      return res
+        .status(401)
+        .json({ success: false, message: "Access token required" });
     }
 
     const decoded = verifyAccessToken(token, process.env.ACCESS_TOKEN_SECRET!);
 
     if (!decoded) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid or expired token",
-      });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid or expired token" });
     }
 
     const { userId, role } = decoded as {
@@ -59,15 +57,14 @@ export const authMiddleware = async (
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role,
+      role,
     };
 
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
-    return res.status(401).json({
-      success: false,
-      message: "Authentication failed",
-    });
+    return res
+      .status(401)
+      .json({ success: false, message: "Authentication failed" });
   }
 };
