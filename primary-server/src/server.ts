@@ -3,6 +3,9 @@ import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import authRouter from "./routes/auth";
+import profileRouter from "./routes/profile";
+import verificationRouter from "./routes/verification";
 
 const app = express();
 const PORT = 4000;
@@ -22,7 +25,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // APIs
-
+app.use("/api/v1/auth", authRouter); 
+app.use("/api/v1/user", profileRouter); 
+app.use("/api/v1/verification", verificationRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Axoma 2.0 backend is live " });

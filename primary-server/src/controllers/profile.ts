@@ -1,36 +1,17 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import prisma from "../db/db";
 import { setupProfileSchema } from "../zod/zod";
-import { verifyAccessToken } from "../utils/token";
-
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET as string;
+import { AuthenticatedRequest } from "../middleware/auth";
 
 const studentPartialSchema = setupProfileSchema.options[0].partial();
 const professorPartialSchema = setupProfileSchema.options[1].partial();
 
-export const setupStudentProfile = async (req: Request, res: Response) => {
+export const setupStudentProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const studentId = decoded.id || decoded.studentId;
-
-    const student = await prisma.students.findUnique({
-      where: { id: studentId },
-    });
-    if (!student)
-      return res
-        .status(404)
-        .json({ success: false, message: "Student not found" });
+    const studentId = req.user!.userId;
 
     const validation = setupProfileSchema.options[0].safeParse(req.body);
     if (!validation.success) {
@@ -41,10 +22,10 @@ export const setupStudentProfile = async (req: Request, res: Response) => {
       });
     }
 
-    const existingProfile = await prisma.studentProfile.findUnique({
+    const existing = await prisma.studentProfile.findUnique({
       where: { studentID: studentId },
     });
-    if (existingProfile)
+    if (existing)
       return res
         .status(409)
         .json({ success: false, message: "Profile already exists" });
@@ -53,40 +34,26 @@ export const setupStudentProfile = async (req: Request, res: Response) => {
       data: { ...validation.data, studentID: studentId },
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Student profile created",
-      data: profile,
-    });
-  } catch (error) {
-    console.error("Student profile onboarding couldn't be completed", error);
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Student profile created",
+        data: profile,
+      });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const setupProfessorProfile = async (req: Request, res: Response) => {
+
+export const setupProfessorProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const professorId = decoded.id || decoded.professorId;
-
-    const professor = await prisma.professors.findUnique({
-      where: { id: professorId },
-    });
-    if (!professor)
-      return res
-        .status(404)
-        .json({ success: false, message: "Professor not found" });
+    const professorId = req.user!.userId;
 
     const validation = setupProfileSchema.options[1].safeParse(req.body);
     if (!validation.success) {
@@ -97,10 +64,10 @@ export const setupProfessorProfile = async (req: Request, res: Response) => {
       });
     }
 
-    const existingProfile = await prisma.professorProfile.findUnique({
+    const existing = await prisma.professorProfile.findUnique({
       where: { professorID: professorId },
     });
-    if (existingProfile)
+    if (existing)
       return res
         .status(409)
         .json({ success: false, message: "Profile already exists" });
@@ -109,32 +76,26 @@ export const setupProfessorProfile = async (req: Request, res: Response) => {
       data: { ...validation.data, professorID: professorId },
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Professor profile created",
-      data: profile,
-    });
-  } catch (error) {
-    console.error("Professor onboarding couldn't be completed", error);
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Professor profile created",
+        data: profile,
+      });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const editStudentProfile = async (req: Request, res: Response) => {
+
+export const editStudentProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const studentId = decoded.id || decoded.studentId;
+    const studentId = req.user!.userId;
 
     const validation = studentPartialSchema.safeParse(req.body);
     if (!validation.success) {
@@ -145,37 +106,31 @@ export const editStudentProfile = async (req: Request, res: Response) => {
       });
     }
 
-    const updatedProfile = await prisma.studentProfile.update({
+    const updated = await prisma.studentProfile.update({
       where: { studentID: studentId },
       data: validation.data,
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Student profile updated",
-      data: updatedProfile,
-    });
-  } catch (error) {
-    console.error("Couldn't edit student profile", error);
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Student profile updated",
+        data: updated,
+      });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const editProfessorProfile = async (req: Request, res: Response) => {
+
+export const editProfessorProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const professorId = decoded.id || decoded.professorId;
+    const professorId = req.user!.userId;
 
     const validation = professorPartialSchema.safeParse(req.body);
     if (!validation.success) {
@@ -186,37 +141,31 @@ export const editProfessorProfile = async (req: Request, res: Response) => {
       });
     }
 
-    const updatedProfile = await prisma.professorProfile.update({
+    const updated = await prisma.professorProfile.update({
       where: { professorID: professorId },
       data: validation.data,
     });
 
-    res.status(200).json({
-      success: true,
-      message: "Professor profile updated",
-      data: updatedProfile,
-    });
-  } catch (error) {
-    console.error("Couldn't edit professor profile", error);
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Professor profile updated",
+        data: updated,
+      });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const getStudentProfile = async (req: Request, res: Response) => {
+
+export const getStudentProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const studentId = decoded.id || decoded.studentId;
+    const studentId = req.user!.userId;
 
     const profile = await prisma.studentProfile.findUnique({
       where: { studentID: studentId },
@@ -226,32 +175,26 @@ export const getStudentProfile = async (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, message: "Profile not found" });
 
-    res.status(200).json({
-      success: true,
-      message: "Student profile fetched",
-      data: profile,
-    });
-  } catch (error) {
-    console.error("Student profile couldn't be fetched", error);
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Student profile fetched",
+        data: profile,
+      });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const getProfessorProfile = async (req: Request, res: Response) => {
+
+export const getProfessorProfile = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const professorId = decoded.id || decoded.professorId;
+    const professorId = req.user!.userId;
 
     const profile = await prisma.professorProfile.findUnique({
       where: { professorID: professorId },
@@ -261,13 +204,15 @@ export const getProfessorProfile = async (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, message: "Profile not found" });
 
-    res.status(200).json({
-      success: true,
-      message: "Professor profile fetched",
-      data: profile,
-    });
-  } catch (error) {
-    console.error("Professor profile couldn't be fetched", error);
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Professor profile fetched",
+        data: profile,
+      });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

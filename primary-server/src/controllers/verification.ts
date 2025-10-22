@@ -1,25 +1,14 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import prisma from "../db/db";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload";
-import { verifyAccessToken } from "../utils/token";
+import { AuthenticatedRequest } from "../middleware/auth";
 
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET as string;
-
-export const addStudentDocs = async (req: Request, res: Response) => {
+export const addStudentDocs = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const studentId = decoded.id || decoded.userId;
+    const studentId = req.user!.userId; 
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (!files?.id_card?.[0] && !files?.fee_receipt?.[0]) {
@@ -29,7 +18,7 @@ export const addStudentDocs = async (req: Request, res: Response) => {
       });
     }
 
-    const createdDocs = [];
+    const createdDocs: any[] = [];
 
     if (files.id_card?.[0]) {
       const uploadResult = await uploadToCloudinary(
@@ -38,7 +27,7 @@ export const addStudentDocs = async (req: Request, res: Response) => {
         `id_card_${studentId}_${Date.now()}`
       );
 
-      const doc = await prisma.StudentDocument.create({
+      const doc = await prisma.studentDocument.create({
         data: {
           studentId,
           docType: "id_card",
@@ -56,7 +45,7 @@ export const addStudentDocs = async (req: Request, res: Response) => {
         `fee_receipt_${studentId}_${Date.now()}`
       );
 
-      const doc = await prisma.StudentDocument.create({
+      const doc = await prisma.studentDocument.create({
         data: {
           studentId,
           docType: "fee_receipt",
@@ -80,22 +69,12 @@ export const addStudentDocs = async (req: Request, res: Response) => {
   }
 };
 
-
-export const addProfessorDocs = async (req: Request, res: Response) => {
+export const addProfessorDocs = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
-
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    if (!decoded)
-      return res
-        .status(401)
-        .json({ success: false, message: "Token invalid or expired" });
-
-    const professorId = decoded.id || decoded.userId;
+    const professorId = req.user!.userId; 
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     if (!files?.id_card?.[0] && !files?.employment_letter?.[0]) {
@@ -105,7 +84,7 @@ export const addProfessorDocs = async (req: Request, res: Response) => {
       });
     }
 
-    const createdDocs = [];
+    const createdDocs: any[] = [];
 
     if (files.id_card?.[0]) {
       const uploadResult = await uploadToCloudinary(
@@ -114,7 +93,7 @@ export const addProfessorDocs = async (req: Request, res: Response) => {
         `id_card_${professorId}_${Date.now()}`
       );
 
-      const doc = await prisma.ProfessorDocument.create({
+      const doc = await prisma.professorDocument.create({
         data: {
           professorId,
           docType: "id_card",
@@ -132,7 +111,7 @@ export const addProfessorDocs = async (req: Request, res: Response) => {
         `employment_letter_${professorId}_${Date.now()}`
       );
 
-      const doc = await prisma.ProfessorDocument.create({
+      const doc = await prisma.professorDocument.create({
         data: {
           professorId,
           docType: "employment_letter",
@@ -156,19 +135,14 @@ export const addProfessorDocs = async (req: Request, res: Response) => {
   }
 };
 
-
-export const getStudentDocs = async (req: Request, res: Response) => {
+export const getStudentDocs = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
+    const studentId = req.user!.userId;
 
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    const studentId = decoded.id || decoded.userId;
-
-    const docs = await prisma.StudentDocument.findMany({
+    const docs = await prisma.studentDocument.findMany({
       where: { studentId },
       orderBy: { createdAt: "desc" },
     });
@@ -182,19 +156,14 @@ export const getStudentDocs = async (req: Request, res: Response) => {
   }
 };
 
-
-export const getProfessorDocs = async (req: Request, res: Response) => {
+export const getProfessorDocs = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
-    const token = req.cookies.accessToken;
-    if (!token)
-      return res
-        .status(400)
-        .json({ success: false, message: "No auth token found" });
+    const professorId = req.user!.userId;
 
-    const decoded = verifyAccessToken(token, accessTokenSecret) as any;
-    const professorId = decoded.id || decoded.userId;
-
-    const docs = await prisma.ProfessorDocument.findMany({
+    const docs = await prisma.professorDocument.findMany({
       where: { professorId },
       orderBy: { createdAt: "desc" },
     });
