@@ -14,12 +14,15 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { loginUser } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -45,9 +48,30 @@ export function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    toast.success("Logged In Successfully!");
+
     try {
       setIsLoading(true);
+      const loginData = await loginUser({
+        ...formData,
+      });
+
+      const data = loginData.data;
+      const fullName = `${data.user.firstName || ""} ${
+        data.user.lastName || ""
+      }`.trim();
+
+      localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userName", fullName);
+
+      login({
+        email: data.user.email,
+        name: fullName,
+        id: data.user.id,
+      });
+
+      toast.success("Logged In Successfully!");
+
       setTimeout(() => {
         setIsLoading(false);
         router.push("/dashboard");

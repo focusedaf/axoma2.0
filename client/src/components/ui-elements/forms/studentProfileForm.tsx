@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import axios from "axios";
+import { createProfile,editProfile } from "@/lib/api";
 
 interface StudentProfile {
   universityName?: string;
@@ -50,10 +50,10 @@ const StudentProfileForm = ({
    try {
      let res;
      if (existingData) {
-       res = await axios.patch("", formData);
+       res = await editProfile(formData);
        toast.success("Profile updated successfully!");
      } else {
-       res = await axios.post("", formData);
+       res = await createProfile(formData);
        toast.success("Profile created successfully!");
      }
      setFormData(res.data.data);

@@ -6,12 +6,6 @@ const primaryApi = axios.create({
   withCredentials: true,
 });
 
-const centralApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_CENTRAL_API_BASE_URL,
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
-});
-
 
 export const registerUser = (payload: any) =>
   primaryApi.post(process.env.NEXT_PUBLIC_API_REGISTER!, payload);
@@ -31,9 +25,12 @@ export const createProfile = (payload: any) =>
 export const getProfile = (payload: any) =>
   primaryApi.post(process.env.NEXT_PUBLIC_API_GET_PROFILE!, payload);
 
-export const getCurrentUser = () => primaryApi.get("/api/v1/auth/me");
+export const editProfile = (payload: any) =>
+  primaryApi.post(process.env.NEXT_PUBLIC_API_EDIT_PROFILE!, payload);
+
+export const getCurrentUser = () => primaryApi.get(process.env.NEXT_PUBLIC_API_ME!);
 
 export const logoutUser = () =>
   primaryApi.post(process.env.NEXT_PUBLIC_API_LOGOUT!);
 
-export default { primaryApi, centralApi };
+export default { primaryApi };

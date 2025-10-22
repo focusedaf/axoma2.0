@@ -15,12 +15,15 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import Metamask from "../buttons/Metamask";
 import RoleSelector from "../roleSelector";
+import { registerUser } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
@@ -64,14 +67,16 @@ export function RegisterForm({
 
     try {
       setIsLoading(true);
-
-      const registrationData = {
+      const registrationData = await registerUser({
         ...formData,
         walletAddress,
-      };
-
-      // await registerUser(registrationData);
-
+      });
+      const data = registrationData.data;
+      const fullName = `${data.user.firstName || ""} ${
+        data.user.lastName || ""
+      }`.trim();
+      login({ email: data.user.email, name: fullName });
+     
       toast.success("Account created successfully!");
 
       setTimeout(() => {
@@ -158,48 +163,46 @@ export function RegisterForm({
             </Field>
           </FieldGroup>
 
-      
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="m@example.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-              />
-            </Field>
+          <Field>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="m@example.com"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+            />
+          </Field>
 
-            <Field>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="8 characters only"
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </Field>
-          
+          <Field>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="8 characters only"
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </Field>
 
           <Field>
             <FieldLabel htmlFor="wallet">Wallet Address</FieldLabel>
@@ -228,7 +231,6 @@ export function RegisterForm({
               )}
             </Button>
           </Field>
-        
         </FieldGroup>
       </form>
     </div>

@@ -14,6 +14,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import axios from "axios";
 import { toast } from "sonner";
+import { createProfile, editProfile } from "@/lib/api";
 
 interface ProfessorProfile {
   universityName?: string;
@@ -56,10 +57,10 @@ export default function ProfessorProfileForm({
     try {
       let res;
       if (existingData) {
-        res = await axios.patch("", formData);
+        res = await editProfile(formData);
         toast.success("Profile updated successfully!");
       } else {
-        res = await axios.post("", formData);
+        res = await createProfile(formData);
         toast.success("Profile created successfully!");
       }
 
