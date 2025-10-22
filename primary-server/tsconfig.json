@@ -53,5 +53,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "src/db/generated"]
+  "include": ["src","src/db/generated/prisma"]
 }
