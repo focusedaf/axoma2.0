@@ -23,7 +23,6 @@ export const studentRegistration = async (req: Request, res: Response) => {
     const {
       firstName,
       lastName,
-      middleName,
       mobileNumber,
       email,
       password,
@@ -52,7 +51,6 @@ export const studentRegistration = async (req: Request, res: Response) => {
       data: {
         firstName,
         lastName,
-        middleName,
         mobileNumber,
         email,
         password: hashedPwd,
@@ -67,7 +65,6 @@ export const studentRegistration = async (req: Request, res: Response) => {
       student: {
         id: student.id,
         firstName: student.firstName,
-        middleName: student.middleName,
         lastName: student.lastName,
         email: student.email,
         mobileNumber: student.mobileNumber,

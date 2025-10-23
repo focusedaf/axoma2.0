@@ -17,8 +17,7 @@ datasource db {
 model Students {
   id                 String   @id @default(uuid()) 
   email              String   @unique
-  firstName          String  
-  middleName          String  
+  firstName          String   
   lastName           String 
   mobileNumber       String   @unique     
   password           String

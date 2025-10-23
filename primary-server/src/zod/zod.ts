@@ -43,7 +43,6 @@ export const passwordSchema = z
 
 export const newUser = z.object({
   firstName: firstNameSchema,
-  middleName: middleNameSchema,
   lastName: lastNameSchema,
   mobileNumber: mobileSchema,
   role: roleSchema,
