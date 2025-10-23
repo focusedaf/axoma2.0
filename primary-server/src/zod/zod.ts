@@ -12,6 +12,12 @@ export const lastNameSchema = z
   .min(2, "Too short")
   .max(30, "Too long");
 
+export const middleNameSchema = z
+  .string()
+  .trim()
+  .min(2, "Too short")
+  .max(30, "Too long");  
+
 export const roleSchema = z.enum(["student", "professor"]);
 
 export const mobileSchema = z
@@ -37,6 +43,7 @@ export const passwordSchema = z
 
 export const newUser = z.object({
   firstName: firstNameSchema,
+  middleName: middleNameSchema,
   lastName: lastNameSchema,
   mobileNumber: mobileSchema,
   role: roleSchema,

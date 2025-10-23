@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev   # <- use 'prod' for production
+    container_name: primary-server
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+    depends_on:
+      - redis
+    volumes:
+      - ./src:/app/src
+      - ./src/db/prisma:/app/src/db/prisma
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - /app/node_modules
+
+  redis:
+    image: redis:7-alpine
+    container_name: primary-redis
+    ports:
+      - "6379:6379"
+
