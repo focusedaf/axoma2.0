@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 
 interface ExamHeaderProps {
   examTitle: string;
@@ -9,12 +9,9 @@ interface ExamHeaderProps {
 
 const ExamHeader = ({ examTitle, timeLeft, onSubmit }: ExamHeaderProps) => {
   return (
-    <header className="flex items-center justify-between border-b bg-white/60 backdrop-blur-sm p-4 rounded-t-xl shadow-sm mb-6">
+    <header className="flex items-center justify-between border-b bg-white/60 backdrop-blur-sm p-4 rounded-md shadow-sm mb-4">
       <div className="flex flex-col gap-1">
-        <h1 className="font-semibold text-lg tracking-tight">{examTitle}</h1>
-        <Badge variant="outline" className="text-xs border-neutral-300">
-          Official Exam
-        </Badge>
+        <h1 className="font-semibold text-3xl tracking-tight">{examTitle}</h1>
       </div>
       <div className="flex items-center gap-4">
         <div className="font-mono text-sm px-3 py-1 rounded-md bg-neutral-100 border border-neutral-200">

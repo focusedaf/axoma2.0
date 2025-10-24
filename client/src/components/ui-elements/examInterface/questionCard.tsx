@@ -31,7 +31,7 @@ const QuestionCard = ({
   onNext,
 }: QuestionCardProps) => {
   return (
-    <Card className="w-full max-w-4xl mx-auto border shadow-sm">
+    <Card className="w-full max-w-5xl mx-auto border shadow-sm">
       <CardHeader className="border-b pb-4">
         <h2 className="text-xl font-semibold">
           Question {currentQuestionIndex + 1} of {totalQuestions}
@@ -42,7 +42,7 @@ const QuestionCard = ({
           percent={progressPercent}
         />
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
+      <CardContent className="pt-2 space-y-3">
         <p className="text-lg text-gray-800">{currentQuestion.questionText}</p>
         <QuestionOptions
           question={currentQuestion}
@@ -50,7 +50,7 @@ const QuestionCard = ({
           onSelectAnswer={onSelectAnswer}
         />
       </CardContent>
-      <CardFooter className="border-t bg-gray-50 p-6 rounded-b-lg">
+      <CardFooter className=" border-t bg-gray-50 p-4 rounded-b-lg">
         <ExamNavigation
           onPrevious={onPrevious}
           onNext={onNext}

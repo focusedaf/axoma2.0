@@ -8,7 +8,7 @@ interface FeedProps {
 
 const Feed = ({ videoRef }: FeedProps) => {
   return (
-    <Card className="relative w-full rounded-lg overflow-hidden border bg-white/80 backdrop-blur-sm shadow-md">
+    <Card className="relative w-full rounded-md overflow-hidden border bg-white/80 backdrop-blur-sm shadow-md p-0">
       <div className="aspect-video bg-black overflow-hidden">
         <video
           ref={videoRef}
@@ -18,7 +18,7 @@ const Feed = ({ videoRef }: FeedProps) => {
           className="w-full h-full object-cover -scale-x-100"
         />
       </div>
-      <Badge className="absolute top-4 left-4 bg-red-600 text-white animate-pulse">
+      <Badge className="absolute top-1 left-3 bg-red-600 text-white animate-pulse">
         REC
       </Badge>
     </Card>

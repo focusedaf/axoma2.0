@@ -113,7 +113,7 @@ export default function ExamInterface() {
     )}`;
   };
 
-  if (isExamSubmitted) return <ExamSubmitted onExit={handleExit} />;
+  if (isExamSubmitted) return <ExamSubmitted/>;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-800 font-sans p-4 md:p-6 lg:p-8">
@@ -136,7 +136,9 @@ export default function ExamInterface() {
             onNext={handleNext}
           />
         </div>
-        <Feed videoRef={videoRef} />
+        <div className="aspect-video">
+          <Feed videoRef={videoRef} />
+        </div>
       </div>
     </div>
   );

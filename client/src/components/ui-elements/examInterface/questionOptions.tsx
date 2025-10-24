@@ -13,7 +13,7 @@ const QuestionOptions = ({ question, selectedOption, onSelectAnswer }:QuestionOp
     <RadioGroup
       value={selectedOption}
       onValueChange={onSelectAnswer}
-      className="space-y-4"
+      className="space-y-3"
     >
       {question.options.map((option) => {
         const isSelected = selectedOption === option;

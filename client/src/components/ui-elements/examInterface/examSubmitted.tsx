@@ -1,12 +1,11 @@
-import React from 'react'
+import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
-interface ExamSubmittedProps {
-  onExit: () => void;
-}
+const ExamSubmitted = () => {
+  const router = useRouter();
 
-const ExamSubmitted = ({ onExit }:ExamSubmittedProps) => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-100 p-6">
       <Card className="w-full max-w-md p-8 text-center border shadow-sm bg-white">
@@ -16,7 +15,10 @@ const ExamSubmitted = ({ onExit }:ExamSubmittedProps) => {
         <p className="text-gray-600 mb-6">
           Your responses have been securely recorded.
         </p>
-        <Button onClick={onExit} className="w-full bg-gray-900 hover:bg-black">
+        <Button
+          onClick={() => router.push("/dashboard/student/exams")}
+          className="w-1/2 bg-gray-900 hover:bg-black"
+        >
           Go to Dashboard
         </Button>
       </Card>
@@ -24,4 +26,4 @@ const ExamSubmitted = ({ onExit }:ExamSubmittedProps) => {
   );
 };
 
-export default ExamSubmitted
+export default ExamSubmitted;
