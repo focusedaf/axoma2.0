@@ -10,18 +10,15 @@ import { AppSidebar } from "@/components/ui-elements/sidebar/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/ui-elements/site-header";
 import Navbar from "@/components/ui-elements/landing/navbar";
-import {
-  ExamSchedule,
-  type Exam,
-} from "@/components/ui-elements/studentDash/examSchedule";
-import { ExamTabs } from "@/components/ui-elements/studentDash/examTabs";
 import StudentHistoryPage from "../dashboard/student/history/page";
 import StudentExamPage from "../dashboard/student/exams/page";
 import StudentResultsPage from "../dashboard/student/results/page";
+import ProfessorExamHistoryPage from "../dashboard/professor/history/page";
 const page = () => {
   return (
     <div>
-      <StudentResultsPage/>
+      <ProfessorExamHistoryPage/>
+      {/* <StudentResultsPage/> */}
       {/* <StudentHistoryPage /> */}
       {/* <StudentExamPage /> */}
       {/* <Navbar/> */}
