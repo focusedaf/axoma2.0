@@ -8,30 +8,31 @@ import {
   PieChart,
   Activity,
   Zap,
+  ArrowRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function WhyAxomaSection() {
-  const features = [
+  const steps = [
     {
-      icon: BarChart,
-      text: "Decentralized Distribution: Uses blockchain for secure, tamper-proof question paper delivery.",
+      title: "Secure Exams",
+      description:
+        "Professors upload exams, which are stored on the blockchain (IPFS) to make them leak-proof.",
     },
     {
-      icon: TrendingUp,
-      text: "AI-Powered Proctoring: Employs centralized AI monitoring to ensure exam integrity.",
+      title: "Verify Student Identity",
+      description:
+        "Students undergo multi-factor identity verification and live face matching before the exam begins.",
     },
     {
-      icon: PieChart,
-      text: "Immutable Records: All results and actions are stored on a blockchain, making them verifiable and permanent.",
+      title: "Real-Time AI Proctoring",
+      description:
+        "AI monitors student behavior, environment, and device usage, flagging any suspicious activity.",
     },
     {
-      icon: Activity,
-      text: "Hybrid Architecture: Combines centralized efficiency with decentralized security.",
-    },
-    {
-      icon: Zap,
-      text: "Enhanced Security: Protects against data breaches and unauthorized access.",
+      title: "Store Immutable Results",
+      description:
+        "Results are hashed and stored on the blockchain, creating a permanent, verifiable academic record.",
     },
   ];
 
@@ -45,9 +46,6 @@ export function WhyAxomaSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <Badge variant="outline" className="mb-4">
-            Why Axoma
-          </Badge>
           <h2 className="text-4xl md:text-5xl mb-4">
             Strengthening Academic Integrity with Intelligence
           </h2>
@@ -57,36 +55,46 @@ export function WhyAxomaSection() {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-center">
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-start">
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6 }}
           >
-            <Card className="p-8 bg-gray-50 h-full">
-              <h3 className="text-xl mb-4">The Problem</h3>
+            <Card className="p-8 bg-gray-50 shadow-xl h-full">
+              <h3 className="text-xl font-semibold mb-4">The Problem</h3>
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-start gap-2 text-sm">
-                  <span className="mt-1">•</span>
+                  <span className="mt-1">
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
                   <span>
                     Risk of single-point failure with centralized servers.
                   </span>
                 </li>
                 <li className="flex items-start gap-2 text-sm">
-                  <span className="mt-1">•</span>
+                  <span className="mt-1">
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
                   <span>Results and records are vulnerable to tampering.</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm">
-                  <span className="mt-1">•</span>
+                  <span className="mt-1">
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
                   <span>Concerns over proctoring bias and effectiveness.</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm">
-                  <span className="mt-1">•</span>
+                  <span className="mt-1">
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
                   <span>Lack of transparency in the exam process.</span>
                 </li>
                 <li className="flex items-start gap-2 text-sm">
-                  <span className="mt-1">•</span>
+                  <span className="mt-1">
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
                   <span>
                     Inefficient and insecure question paper distribution.
                   </span>
@@ -101,32 +109,35 @@ export function WhyAxomaSection() {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Card className="p-8 bg-blue-100 text-black shadow-xl">
+            <Card className="p-8 bg-blue-100 text-black shadow-xl h-full">
               <div className="flex items-center gap-2 mb-6">
                 <div className="p-2 bg-white rounded">
                   <BarChart className="w-5 h-5 text-blue-600" />
                 </div>
-                <h3 className="text-xl">The Axoma Solution</h3>
+                <h3 className="text-xl font-semibold">How Axoma Solves It</h3>
               </div>
-              <ul className="space-y-3">
-                {features.map((feature, i) => {
-                  const Icon = feature.icon;
-                  return (
-                    <motion.li
-                      key={i}
-                      className="flex items-start gap-3 text-sm"
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
-                    >
-                      <div className="p-1 bg-white/20 border border-gray-300 mt-0.5">
-                        <Check className="w-3 h-3" />
-                      </div>
-                      <span>{feature.text}</span>
-                    </motion.li>
-                  );
-                })}
+
+              <ul className="space-y-4">
+                {steps.map((step, i) => (
+                  <motion.li
+                    key={i}
+                    className="flex items-start gap-3"
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                  >
+                    <div className="flex-shrink-0 w-6 h-6 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-blue-200 mt-0.5">
+                      {i + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">{step.title}</h4>
+                      <p className="text-gray-700 text-sm">
+                        {step.description}
+                      </p>
+                    </div>
+                  </motion.li>
+                ))}
               </ul>
             </Card>
           </motion.div>

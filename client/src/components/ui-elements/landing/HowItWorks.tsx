@@ -34,7 +34,6 @@ export function HowItWorks() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <Badge variant="outline" className="mb-4">How It Works</Badge>
           <h2 className="text-4xl md:text-5xl mb-4">
             Secure Exams in 3 Simple Steps
           </h2>

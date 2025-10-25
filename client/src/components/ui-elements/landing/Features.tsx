@@ -58,9 +58,6 @@ export function Features() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <Badge variant="outline" className="mb-4">
-            Core Features
-          </Badge>
           <h2 className="text-4xl md:text-5xl mb-4">
             Make Your Exams Smarter, Safer, and More Reliable
           </h2>

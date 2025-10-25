@@ -44,7 +44,7 @@ export function Benefits() {
         "Automates paper distribution and proctoring to reduce manual workload for faculty.",
     },
     {
-      icon: Calendar, 
+      icon: Calendar,
       title: "Secure Paper Distribution",
       description:
         "Uses IPFS and smart contracts for secure, time-locked question paper delivery, eliminating leaks.",
@@ -80,9 +80,6 @@ export function Benefits() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <Badge variant="outline" className="mb-4">
-            Benefits
-          </Badge>
           <h2 className="text-4xl md:text-5xl mb-4">
             Strengthening Academic Integrity with Intelligence
           </h2>

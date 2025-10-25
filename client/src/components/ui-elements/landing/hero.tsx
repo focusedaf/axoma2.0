@@ -18,7 +18,6 @@ export default function Hero() {
     <section className="pt-32 pb-16 relative overflow-hidden min-h-[600px]">
       <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-blue-50/50 to-white"></div>
 
-
       {floatingIcons.map((item, i) => {
         const { Icon, top, left, right, delay } = item;
         return (
@@ -66,7 +65,10 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Button size="lg" onClick={() => router.push("/register")}>
+            <Button
+              size="lg"
+              onClick={() => router.push("/register")}
+            >
               Get Started
             </Button>
           </motion.div>

@@ -109,10 +109,9 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Button size="sm" variant="ghost">
+              <Button size="sm" variant="outline">
                 Sign In
               </Button>
-              <Button size="sm">Get Started</Button>
             </>
           )}
         </div>
@@ -189,15 +188,6 @@ export default function Navbar() {
                 >
                   <Users className="h-4 w-4" />
                   <span className="text-sm font-medium">Sign In</span>
-                </Link>
-
-                <Link
-                  href="/register"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90"
-                >
-                  <User className="h-4 w-4" />
-                  <span className="text-sm font-medium">Get Started</span>
                 </Link>
               </>
             )}
