@@ -21,7 +21,7 @@ import StudentDashboardPage from "../dashboard/student/page";
 const page = () => {
   return (
     <div>
-      <StudentDashboardPage/>
+      {/* <StudentDashboardPage/> */}
       {/* <ProfessorDashboardPage/> */}
       {/* <CreateExamPage/> */}
       {/* <ReviewExamPage/> */}
@@ -29,7 +29,7 @@ const page = () => {
       {/* <StudentResultsPage/> */}
       {/* <StudentHistoryPage /> */}
       {/* <StudentExamPage /> */}
-      {/* <Navbar/> */}
+      <Navbar/>
       {/* <SidebarProvider>
         <SiteHeader />
         <AppSidebar />

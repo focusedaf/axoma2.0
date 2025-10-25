@@ -1,34 +1,43 @@
 "use client";
 import React, { useState } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Home, Menu, Users, Package, X, User, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Home, Menu, Users, Package, X, User, LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type NavItem = { label: string; href: string; icon: React.ReactNode };
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false); 
+  const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, logout } = useAuth();
   const router = useRouter();
 
   const publicNavLinks: NavItem[] = [
-    { href: "/", label: "Home", icon: <Home className="h-4 w-4" /> },
+    { href: "#hero", label: "Home", icon: <Home className="h-4 w-4" /> },
     {
-      href: "/features",
+      href: "#features",
       label: "Features",
       icon: <Package className="h-4 w-4" />,
     },
-    { href: "/docs", label: "Docs", icon: <Users className="h-4 w-4" /> },
+    {
+      href: "#benefits",
+      label: "Benefits",
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
+      href: "#how-it-works",
+      label: "How It Works",
+      icon: <Package className="h-4 w-4" />,
+    },
+    {
+      href: "#why-axoma",
+      label: "Why Axoma",
+      icon: <Users className="h-4 w-4" />,
+    },
   ];
 
   const authenticatedNavLinks: NavItem[] = [
@@ -43,20 +52,82 @@ export default function Navbar() {
   const navLinks = isLoggedIn ? authenticatedNavLinks : publicNavLinks;
 
   return (
-    <header>
-      <div className="flex items-center justify-between border-b h-16 px-4 md:hidden">
-        <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
-          <Menu className="h-6 w-6" />
-        </Button>
-        <Link href="/" className="text-xl font-bold">
-          Axoma
-        </Link>
+    <motion.header
+      className="border-b bg-white/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="container mx-auto px-6 py-5 flex items-center justify-between relative">
+        <div className="flex items-center gap-4 flex-none">
+          <button className="md:hidden" onClick={() => setIsOpen(true)}>
+            <Menu className="h-6 w-6" />
+          </button>
+          <motion.h1
+            className="text-xl font-bold"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            Axoma
+          </motion.h1>
+        </div>
+
+        <nav className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 gap-8 text-md font-semibold text-gray-600">
+          {navLinks.map((item, i) => (
+            <motion.a
+              key={item.label}
+              href={item.href}
+              className="hover:text-gray-900"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 + i * 0.1 }}
+              whileHover={{ scale: 1.05 }}
+            >
+              {item.label}
+            </motion.a>
+          ))}
+        </nav>
+
+        <div className="hidden md:flex items-center gap-4 flex-none">
+          {isLoggedIn ? (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/profile")}
+              >
+                <User className="mr-2 h-4 w-4" /> Profile
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={logout}
+                className="text-destructive hover:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" /> Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="ghost">
+                Sign In
+              </Button>
+              <Button size="sm">Get Started</Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Mobile Sidebar */}
       {isOpen && (
-        <aside className="fixed top-0 left-0 h-screen w-16 bg-background shadow-lg z-50 md:hidden">
-          <div className="flex h-16 items-center justify-end border-b px-2">
+        <motion.aside
+          initial={{ x: -200 }}
+          animate={{ x: 0 }}
+          exit={{ x: -200 }}
+          transition={{ duration: 0.4 }}
+          className="fixed top-0 left-0 h-screen w-full bg-background shadow-md z-50 md:hidden flex flex-col"
+        >
+          <div className="flex items-center justify-between h-16 border-b px-4">
+            <motion.h1 className="text-lg font-bold">Axoma</motion.h1>
             <Button
               variant="ghost"
               size="icon"
@@ -67,145 +138,72 @@ export default function Navbar() {
           </div>
 
           <ScrollArea className="flex-1">
-            <nav className="flex flex-col p-2 space-y-1">
-            
+            <nav className="flex flex-col p-2 space-y-2">
               {navLinks.map((link, idx) => (
                 <Link
                   key={idx}
                   href={link.href}
-                  className="group relative flex items-center justify-center w-12 h-12 rounded-md hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground"
                 >
                   {link.icon}
-                  <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap bg-background px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    {link.label}
-                  </span>
+                  <span className="text-sm font-medium">{link.label}</span>
                 </Link>
               ))}
-
-              {isLoggedIn ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    onClick={() => router.push("/profile")}
-                    className="group relative flex w-full items-center justify-center h-12 rounded-md hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap bg-background px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      Profile
-                    </span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={logout}
-                    className="group relative flex w-full items-center justify-center h-12 rounded-md text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap bg-background px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      Logout
-                    </span>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="group relative flex items-center justify-center w-12 h-12 rounded-md border hover:bg-accent"
-                  >
-                    <Users className="h-4 w-4" />
-                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap bg-background px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      Sign In
-                    </span>
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="group relative flex items-center justify-center w-12 h-12 rounded-md bg-primary text-white hover:bg-primary/90"
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap bg-background px-2 py-1 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      Get Started
-                    </span>
-                  </Link>
-                </>
-              )}
             </nav>
           </ScrollArea>
-        </aside>
-      )}
 
-      {/* Desktop Navbar */}
-      <div className="hidden md:flex items-center justify-between h-16 px-4 border-b">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <svg
-            viewBox="0 0 40 40"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
-          >
-            <circle
-              cx="20"
-              cy="20"
-              r="18"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-          </svg>
-          <span className="hidden sm:inline">Axoma</span>
-        </Link>
-
-        <NavigationMenu className="hidden md:flex">
-          <NavigationMenuList>
-            {navLinks.map((link, idx) => (
-              <NavigationMenuItem key={idx}>
-                <NavigationMenuLink
-                  asChild
-                  className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+          <div className="p-4 border-t space-y-2">
+            {isLoggedIn ? (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    router.push("/profile");
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 justify-start rounded-md hover:bg-accent hover:text-accent-foreground"
                 >
-                  <Link href={link.href}>{link.label}</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
+                  <User className="h-4 w-4" />
+                  <span className="text-sm font-medium">Profile</span>
+                </Button>
 
-        <div className="hidden md:flex items-center gap-2">
-          {isLoggedIn ? (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/profile")}
-              >
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={logout}
-                className="text-destructive hover:text-destructive"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className={cn(buttonVariants({ size: "sm" }))}
-              >
-                Get Started
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    logout();
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 justify-start rounded-md"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="text-sm font-medium">Logout</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-md border hover:bg-accent"
+                >
+                  <Users className="h-4 w-4" />
+                  <span className="text-sm font-medium">Sign In</span>
+                </Link>
+
+                <Link
+                  href="/register"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-2 rounded-md bg-primary text-white hover:bg-primary/90"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="text-sm font-medium">Get Started</span>
+                </Link>
+              </>
+            )}
+          </div>
+        </motion.aside>
+      )}
+    </motion.header>
   );
 }
