@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 type Notification = {
   id: string;
@@ -70,7 +71,44 @@ export function SiteHeader() {
           Welcome, {displayName}
         </h1>
 
-     
+        {userRole === "professor" && (
+          <div className="flex gap-2">
+            <Button
+              onClick={() =>
+                (window.location.href = "/dashboard/professor/create-exam")
+              }
+            >
+              Create Exam
+            </Button>
+          </div>
+        )}
+
+        {userRole === "student" && (
+          <div className="flex gap-2">
+            <Button
+              onClick={() =>
+                (window.location.href = "/dashboard/student/take-exam")
+              }
+            >
+              Take Exam
+            </Button>
+            <Button
+              onClick={() =>
+                (window.location.href = "/dashboard/student/results")
+              }
+            >
+              View Results
+            </Button>
+            <Button
+              onClick={() =>
+                (window.location.href = "/dashboard/student/history")
+              }
+            >
+              Exam History
+            </Button>
+          </div>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="relative p-2 rounded-full hover:bg-white/10 transition-colors">

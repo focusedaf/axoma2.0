@@ -29,7 +29,7 @@ const page = () => {
       {/* <StudentResultsPage/> */}
       {/* <StudentHistoryPage /> */}
       {/* <StudentExamPage /> */}
-      <Navbar/>
+      {/* <Navbar/> */}
       {/* <SidebarProvider>
         <SiteHeader />
         <AppSidebar />
