@@ -17,10 +17,12 @@ import ProfessorExamHistoryPage from "../dashboard/professor/history/page";
 import ReviewExamPage from "../dashboard/professor/review-exam/page";
 import CreateExamPage from "../dashboard/professor/create-exam/page";
 import ProfessorDashboardPage from "../dashboard/professor/page";
+import StudentDashboardPage from "../dashboard/student/page";
 const page = () => {
   return (
     <div>
-      <ProfessorDashboardPage/>
+      <StudentDashboardPage/>
+      {/* <ProfessorDashboardPage/> */}
       {/* <CreateExamPage/> */}
       {/* <ReviewExamPage/> */}
       {/* <ProfessorExamHistoryPage/> */}

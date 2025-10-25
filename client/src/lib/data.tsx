@@ -1,7 +1,14 @@
 import { ReactNode } from "react";
-import { Activity, Book, FileCheck2, Users } from "lucide-react";
+import {
+  Activity,
+  Book,
+  FileCheck2,
+  Users,
+  Award,
+  CalendarCheck,
+  NotebookPen,
+} from "lucide-react";
 
-// --- Types ---
 export type StatCard = {
   title: string;
   value: string;
@@ -30,7 +37,6 @@ export type AnnouncementItem = {
   time: string;
 };
 
-// --- Mock Data ---
 export const statCards: StatCard[] = [
   {
     title: "Active Exams",
@@ -207,3 +213,97 @@ export const recentActivity: ActivityItem[] = [
 ];
 
 
+export type StudentStatCard = {
+  title: string;
+  value: string;
+  description?: string;
+  icon: ReactNode;
+};
+
+export type UpcomingExam = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+};
+
+export type RecentResult = {
+  id: string;
+  exam: string;
+  date: string;
+  score: string;
+  status: "Passed" | "Failed";
+};
+
+
+export const studentStats: StudentStatCard[] = [
+  {
+    title: "Overall Grade Average",
+    value: "87%",
+    description: "+4.56% from last term",
+    icon: <Award className="h-4 w-4 text-muted-foreground" />,
+  },
+  {
+    title: "Exams Remaining",
+    value: "3",
+    description: "This semester",
+    icon: <CalendarCheck className="h-4 w-4 text-muted-foreground" />,
+  },
+  {
+    title: "Last Exam Taken",
+    value: "Mathematics",
+    description: "2 days ago",
+    icon: <NotebookPen className="h-4 w-4 text-muted-foreground" />,
+  }
+];
+
+export const upcomingExams: UpcomingExam[] = [
+  {
+    id: "upc_math",
+    title: "Mathematics",
+    date: "Sept 15, 2025",
+    time: "10:00 am",
+  },
+  {
+    id: "upc_phys",
+    title: "Physics",
+    date: "Sept 17, 2025",
+    time: "2:00 pm",
+  },
+  {
+    id: "upc_chem",
+    title: "Chemistry",
+    date: "Sept 20, 2025",
+    time: "12:00 pm",
+  },
+  {
+    id: "upc_bio",
+    title: "Biology",
+    date: "Sept 22, 2025",
+    time: "9:00 am",
+  },
+];
+
+export const recentResults: RecentResult[] = [
+  {
+    id: "res_math",
+    exam: "Mathematics",
+    date: "Sept 15, 2025",
+    score: "85/100",
+    status: "Passed",
+  },
+  {
+    id: "res_phys",
+    exam: "Physics",
+    date: "Sept 17, 2025",
+    score: "75/100",
+    status: "Passed",
+  },
+  {
+    id: "res_chem",
+    exam: "Chemistry",
+    date: "Sept 20, 2025",
+    score: "55/100",
+    status: "Passed",
+  },
+];
