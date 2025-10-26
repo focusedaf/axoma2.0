@@ -8,7 +8,7 @@ from workers.audio_processor import AudioProcessor
 # -----------------------------
 # Database Configuration
 # -----------------------------
-DATABASE_URL = 'postgresql://postgres:iMOiUAaOXsYQbHCCoGPIzSIHkPFcSGNR@gondola.proxy.rlwy.net:37615/railway'
+DATABASE_URL = 'placeholder'
 
 url = urlparse(DATABASE_URL)
 db_config = {
@@ -128,3 +128,4 @@ finally:
     video_processor.close()
     audio_processor.close()
     print("✅ Clean exit.")
+
