@@ -87,7 +87,7 @@ export function Benefits() {
             Designed to ensure fairness, transparency, and accountability in
             digital examinations.
           </p>
-        </motion.div>
+        </motion.div> 
 
         <motion.div
           className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto"

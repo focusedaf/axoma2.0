@@ -74,10 +74,15 @@ export default function ProfessorProfileForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-8 space-x-10 w-full md:max-w-7xl",
+        className
+      )}
+    >
       <form onSubmit={handleSubmit}>
-        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-          <Field>
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
+          <Field className="w-full max-w-xl">
             <FieldLabel>University Name</FieldLabel>
             <Input
               name="universityName"
@@ -85,7 +90,7 @@ export default function ProfessorProfileForm({
               onChange={handleChange}
             />
           </Field>
-          <Field>
+          <Field className="w-full max-w-xl">
             <FieldLabel>College Name</FieldLabel>
             <Input
               name="collegeName"
@@ -95,8 +100,8 @@ export default function ProfessorProfileForm({
           </Field>
         </FieldGroup>
 
-        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-          <Field>
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
+          <Field className="w-full max-w-xl">
             <FieldLabel>Department / Subject Area</FieldLabel>
             <Input
               name="department"
@@ -104,7 +109,7 @@ export default function ProfessorProfileForm({
               onChange={handleChange}
             />
           </Field>
-          <Field>
+          <Field className="w-full max-w-xl">
             <FieldLabel>Designation</FieldLabel>
             <Input
               name="designation"
@@ -114,8 +119,8 @@ export default function ProfessorProfileForm({
           </Field>
         </FieldGroup>
 
-        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-          <Field>
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
+          <Field className="w-full max-w-xl">
             <FieldLabel>Joining Year</FieldLabel>
             <Input
               name="joiningYear"
@@ -124,7 +129,7 @@ export default function ProfessorProfileForm({
               onChange={handleChange}
             />
           </Field>
-          <Field>
+          <Field className="w-full max-w-xl">
             <FieldLabel>Employment Type</FieldLabel>
             <Select
               value={formData.employmentType}

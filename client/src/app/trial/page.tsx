@@ -34,9 +34,13 @@ const page = () => {
         <SiteHeader />
         <AppSidebar />
       </SidebarProvider> */}
-      {/* <VerifyDocsForm/> */}
-      {/* <StudentProfileForm/>
-      <ProfessorProfileForm/> */}
+
+      <div className="w-screen h-screen flex items-center justify-center">
+        <VerifyDocsForm />
+        {/* <StudentProfileForm /> */}
+        {/* <ProfessorProfileForm /> */}
+      </div>
+
       {/* <Progress/> */}
       {/* <Footer /> */}
       {/* <Metamask />

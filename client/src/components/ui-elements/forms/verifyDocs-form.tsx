@@ -124,7 +124,7 @@ const VerifyDocsForm = ({
   };
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full max-w-xl", className)}>
       <div className="flex items-start gap-3">
         {/* Compact Upload Area */}
         <div

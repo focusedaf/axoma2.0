@@ -66,10 +66,15 @@ const StudentProfileForm = ({
  };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-8 space-x-10 w-full md:max-w-7xl",
+        className
+      )}
+    >
       <form onSubmit={handleSubmit}>
-        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-          <Field>
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
+          <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="universityName">University Name</FieldLabel>
             <Input
               id="universityName"
@@ -78,7 +83,7 @@ const StudentProfileForm = ({
               onChange={handleChange}
             />
           </Field>
-          <Field>
+          <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="collegeName">College Name</FieldLabel>
             <Input
               id="collegeName"
@@ -89,8 +94,8 @@ const StudentProfileForm = ({
           </Field>
         </FieldGroup>
 
-        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-          <Field>
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between  items-stretch">
+          <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="majorName">Major Name</FieldLabel>
             <Input
               id="majorName"
@@ -99,7 +104,7 @@ const StudentProfileForm = ({
               onChange={handleChange}
             />
           </Field>
-          <Field>
+          <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="currentSem">Current Semester</FieldLabel>
             <Input
               id="currentSem"
@@ -110,8 +115,8 @@ const StudentProfileForm = ({
           </Field>
         </FieldGroup>
 
-        <FieldGroup className="flex flex-col sm:flex-row gap-2 items-stretch">
-          <Field>
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
+          <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="startYear">Batch Start Year</FieldLabel>
             <Input
               id="startYear"
@@ -121,7 +126,7 @@ const StudentProfileForm = ({
               placeholder="YYYY"
             />
           </Field>
-          <Field>
+          <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="gradYear">Expected Graduation Year</FieldLabel>
             <Input
               id="gradYear"
