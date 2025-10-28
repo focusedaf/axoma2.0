@@ -1,6 +1,10 @@
 import cv2
 import threading
 import time
+import os
+print("CWD:", os.getcwd())
+
+from dotenv import load_dotenv
 from urllib.parse import urlparse
 from workers.frame_processor import FrameProcessor
 from workers.audio_processor import AudioProcessor
@@ -8,7 +12,18 @@ from workers.audio_processor import AudioProcessor
 # -----------------------------
 # Database Configuration
 # -----------------------------
-DATABASE_URL = 'placeholder'
+
+env_path = os.path.join(os.getcwd(), ".env")
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+    print(f"Loaded .env from: {env_path}")
+else:
+    print(f".env not found at: {env_path}")
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+print("Loaded DATABASE_URL:", os.getenv('DATABASE_URL'))
+if not DATABASE_URL:
+    raise EnvironmentError("DATABASE_URL not found in .env file.")
 
 url = urlparse(DATABASE_URL)
 db_config = {
@@ -128,4 +143,3 @@ finally:
     video_processor.close()
     audio_processor.close()
     print("✅ Clean exit.")
-
