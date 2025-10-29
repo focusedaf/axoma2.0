@@ -4,7 +4,7 @@ import ExamHeader from "@/components/ui-elements/examInterface/examHeader";
 import Feed from "@/components/ui-elements/examInterface/feed";
 import QuestionCard from "@/components/ui-elements/examInterface/questionCard";
 import ExamSubmitted from "@/components/ui-elements/examInterface/examSubmitted";
-
+import { initAntiCheat } from "@/lib/antiCheat";
 interface Question {
   id: number;
   questionText: string;
@@ -55,6 +55,10 @@ export default function ExamInterface() {
   const totalQuestions = MOCK_QUESTIONS.length;
   const currentQuestion = MOCK_QUESTIONS[currentQuestionIndex];
   const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
+  useEffect(() => {
+    initAntiCheat();
+  }, []);
 
   // Webcam setup
   useEffect(() => {
@@ -113,7 +117,7 @@ export default function ExamInterface() {
     )}`;
   };
 
-  if (isExamSubmitted) return <ExamSubmitted/>;
+  if (isExamSubmitted) return <ExamSubmitted />;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 text-gray-800 font-sans p-4 md:p-6 lg:p-8">
