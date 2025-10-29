@@ -12,12 +12,6 @@ export const lastNameSchema = z
   .min(2, "Too short")
   .max(30, "Too long");
 
-export const middleNameSchema = z
-  .string()
-  .trim()
-  .min(2, "Too short")
-  .max(30, "Too long");  
-
 export const roleSchema = z.enum(["student", "professor"]);
 
 export const mobileSchema = z
@@ -97,3 +91,31 @@ export const setupProfileSchema = z.discriminatedUnion("role", [
   studentProfile.merge(base),
   professorProfile.merge(base),
 ]);
+
+// Validation schemas for OTP requests
+export const sendPhoneOTPSchema = z.object({
+  phoneNumber: mobileSchema,
+});
+
+export const sendEmailOTPSchema = z.object({
+  email: emailSchema,
+});
+
+export const verifyPhoneOTPSchema = z.object({
+  phoneNumber: mobileSchema,
+  code: z.string().min(4).max(10, "Invalid OTP code"),
+});
+
+export const verifyEmailOTPSchema = z.object({
+  email: emailSchema,
+  code: z.string().min(4).max(10, "Invalid OTP code"),
+});
+
+// Validation schemas for email verification
+export const sendVerificationEmailSchema = z.object({
+  email: emailSchema,
+});
+
+export const verifyEmailTokenSchema = z.object({
+  token: z.string().min(32, "Invalid token"),
+});
