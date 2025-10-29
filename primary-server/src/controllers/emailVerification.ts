@@ -1,20 +1,16 @@
-// controllers/emailVerification.ts
 import { Request, Response } from "express";
 import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
-import { z } from "zod";
-import { emailSchema,sendVerificationEmailSchema,verifyEmailTokenSchema } from "../zod/zod";
+import { db } from "../db/db";
+import {
+  sendVerificationEmailSchema,
+  verifyEmailTokenSchema,
+} from "../zod/zod";
 import sendgridConfig from "../config/sendgrid/config";
 
 
-// Initialize SendGrid
 sgMail.setApiKey(sendgridConfig.apiKey);
 
-
-/**
- * Send verification email with link
- * POST /api/email-verification/send
- */
 export const sendVerificationEmail = async (
   req: Request,
   res: Response
@@ -22,22 +18,58 @@ export const sendVerificationEmail = async (
   try {
     const { email } = sendVerificationEmailSchema.parse(req.body);
 
+    const studentResult = await db.query(
+      `SELECT id, "firstName", "isEmailVerified" FROM "Students" WHERE email = $1`,
+      [email]
+    );
+
+    const professorResult = await db.query(
+      `SELECT id, "firstName", "isEmailVerified" FROM "Professors" WHERE email = $1`,
+      [email]
+    );
+
+    let user = null;
+    let userTable = "";
+
+    if (studentResult.rows.length > 0) {
+      user = studentResult.rows[0];
+      userTable = "Students";
+    } else if (professorResult.rows.length > 0) {
+      user = professorResult.rows[0];
+      userTable = "Professors";
+    }
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    if (user.isEmailVerified) {
+      res.status(400).json({
+        success: false,
+        message: "Email already verified",
+      });
+      return;
+    }
+
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const tokenExpiry = new Date(
       Date.now() + sendgridConfig.verificationTokenExpiry * 60 * 60 * 1000
     );
 
-    // TODO: Save token to database
-    // await prisma.user.update({
-    //   where: { email },
-    //   data: {
-    //     verificationToken,
-    //     verificationTokenExpiry: tokenExpiry,
-    //   },
-    // });
+    await db.query(
+      `UPDATE "${userTable}" 
+       SET "verificationToken" = $1, 
+           "verificationTokenExpiry" = $2,
+           "updatedAt" = NOW()
+       WHERE id = $3`,
+      [verificationToken, tokenExpiry, user.id]
+    );
 
-    // Create verification link
     const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
 
     // Email content
@@ -69,7 +101,7 @@ export const sendVerificationEmail = async (
           </head>
           <body>
             <div class="container">
-              <h2>Welcome to Axoma!</h2>
+              <h2>Welcome to Axoma, ${user.firstName}!</h2>
               <p>Thank you for signing up. Please verify your email address to complete your registration.</p>
               <p>
                 <a href="${verificationLink}" class="button">Verify Email Address</a>
@@ -85,7 +117,7 @@ export const sendVerificationEmail = async (
         </html>
       `,
       text: `
-        Welcome to Axoma!
+        Welcome to Axoma, ${user.firstName}!
         
         Thank you for signing up. Please verify your email address by clicking the link below:
         
@@ -111,11 +143,11 @@ export const sendVerificationEmail = async (
   } catch (error: any) {
     console.error("Send Verification Email Error:", error);
 
-    if (error instanceof z.ZodError) {
+    if (error.name === "ZodError") {
       res.status(400).json({
         success: false,
         message: "Validation error",
-        errors: error.issues,
+        errors: error.errors,
       });
       return;
     }
@@ -127,10 +159,7 @@ export const sendVerificationEmail = async (
   }
 };
 
-/**
- * Verify email using token from link
- * GET /api/email-verification/verify?token=xxx
- */
+
 export const verifyEmailToken = async (
   req: Request,
   res: Response
@@ -138,49 +167,80 @@ export const verifyEmailToken = async (
   try {
     const { token } = verifyEmailTokenSchema.parse(req.query);
 
-    // TODO: Find user by token and check expiry
-    // const user = await prisma.user.findFirst({
-    //   where: {
-    //     verificationToken: token,
-    //     verificationTokenExpiry: {
-    //       gte: new Date(), // Token not expired
-    //     },
-    //   },
-    // });
+    const studentResult = await db.query(
+      `SELECT id, email, "firstName", "lastName", "verificationTokenExpiry"
+       FROM "Students" 
+       WHERE "verificationToken" = $1`,
+      [token]
+    );
 
-    // if (!user) {
-    //   res.status(400).json({
-    //     success: false,
-    //     message: "Invalid or expired verification token",
-    //   });
-    //   return;
-    // }
+    let user = null;
+    let userTable = "";
 
-    // TODO: Update user as verified
-    // await prisma.user.update({
-    //   where: { id: user.id },
-    //   data: {
-    //     isVerified: true,
-    //     verificationToken: null,
-    //     verificationTokenExpiry: null,
-    //   },
-    // });
+    if (studentResult.rows.length > 0) {
+      user = studentResult.rows[0];
+      userTable = "Students";
+    } else {
+      const professorResult = await db.query(
+        `SELECT id, email, "firstName", "lastName", "verificationTokenExpiry"
+         FROM "Professors" 
+         WHERE "verificationToken" = $1`,
+        [token]
+      );
+
+      if (professorResult.rows.length > 0) {
+        user = professorResult.rows[0];
+        userTable = "Professors";
+      }
+    }
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid verification token",
+      });
+      return;
+    }
+
+    if (new Date() > new Date(user.verificationTokenExpiry)) {
+      res.status(400).json({
+        success: false,
+        message: "Verification token has expired",
+      });
+      return;
+    }
+
+    await db.query(
+      `UPDATE "${userTable}" 
+       SET "isEmailVerified" = true,
+           "verificationToken" = NULL,
+           "verificationTokenExpiry" = NULL,
+           "updatedAt" = NOW()
+       WHERE id = $1`,
+      [user.id]
+    );
 
     res.status(200).json({
       success: true,
       message: "Email verified successfully",
       data: {
         verified: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
       },
     });
   } catch (error: any) {
     console.error("Verify Email Token Error:", error);
 
-    if (error instanceof z.ZodError) {
+    if (error.name === "ZodError") {
       res.status(400).json({
         success: false,
         message: "Validation error",
-        errors: error.issues,
+        errors: error.errors,
       });
       return;
     }
@@ -192,10 +252,7 @@ export const verifyEmailToken = async (
   }
 };
 
-/**
- * Resend verification email
- * POST /api/email-verification/resend
- */
+
 export const resendVerificationEmail = async (
   req: Request,
   res: Response
@@ -203,37 +260,49 @@ export const resendVerificationEmail = async (
   try {
     const { email } = sendVerificationEmailSchema.parse(req.body);
 
-    // TODO: Check if user exists and is not already verified
-    // const user = await prisma.user.findUnique({
-    //   where: { email },
-    // });
+    const studentResult = await db.query(
+      `SELECT id, "isEmailVerified" FROM "Students" WHERE email = $1`,
+      [email]
+    );
 
-    // if (!user) {
-    //   res.status(404).json({
-    //     success: false,
-    //     message: "User not found",
-    //   });
-    //   return;
-    // }
+    const professorResult = await db.query(
+      `SELECT id, "isEmailVerified" FROM "Professors" WHERE email = $1`,
+      [email]
+    );
 
-    // if (user.isVerified) {
-    //   res.status(400).json({
-    //     success: false,
-    //     message: "Email already verified",
-    //   });
-    //   return;
-    // }
+    let user = null;
 
-    // Reuse the send verification email logic
+    if (studentResult.rows.length > 0) {
+      user = studentResult.rows[0];
+    } else if (professorResult.rows.length > 0) {
+      user = professorResult.rows[0];
+    }
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    if (user.isEmailVerified) {
+      res.status(400).json({
+        success: false,
+        message: "Email already verified",
+      });
+      return;
+    }
+
     await sendVerificationEmail(req, res);
   } catch (error: any) {
     console.error("Resend Verification Email Error:", error);
 
-    if (error instanceof z.ZodError) {
+    if (error.name === "ZodError") {
       res.status(400).json({
         success: false,
         message: "Validation error",
-        errors: error.issues,
+        errors: error.errors,
       });
       return;
     }

@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import twilio from "twilio";
+import { db } from "../db/db";
+import { sendPhoneOTPSchema, verifyPhoneOTPSchema } from "../zod/zod";
 import twilioConfig from "../config/twilio/config";
-import {z} from "zod"
-import { emailSchema,mobileSchema,sendEmailOTPSchema,sendPhoneOTPSchema,verifyEmailOTPSchema,verifyPhoneOTPSchema } from "../zod/zod";
 
 const client = twilio(twilioConfig.accountSid, twilioConfig.authToken);
+
 
 export const sendPhoneOTP = async (
   req: Request,
@@ -12,6 +13,24 @@ export const sendPhoneOTP = async (
 ): Promise<void> => {
   try {
     const { phoneNumber } = sendPhoneOTPSchema.parse(req.body);
+
+    const studentResult = await db.query(
+      `SELECT id FROM "Students" WHERE "mobileNumber" = $1`,
+      [phoneNumber]
+    );
+
+    const professorResult = await db.query(
+      `SELECT id FROM "Professors" WHERE "mobileNumber" = $1`,
+      [phoneNumber]
+    );
+
+    if (studentResult.rows.length === 0 && professorResult.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "Phone number not registered",
+      });
+      return;
+    }
 
     const formattedPhone = `+91${phoneNumber}`;
 
@@ -33,11 +52,11 @@ export const sendPhoneOTP = async (
   } catch (error: any) {
     console.error("Send Phone OTP Error:", error);
 
-    if (error instanceof z.ZodError) {
+    if (error.name === "ZodError") {
       res.status(400).json({
         success: false,
         message: "Validation error",
-        errors: error.issues,
+        errors: error.errors,
       });
       return;
     }
@@ -48,7 +67,6 @@ export const sendPhoneOTP = async (
     });
   }
 };
-
 
 
 export const verifyPhoneOTP = async (
@@ -67,23 +85,7 @@ export const verifyPhoneOTP = async (
         code: code,
       });
 
-    if (verificationCheck.status === "approved") {
-      // TODO: Update user verification status in database
-      // Example with Prisma:
-      // await prisma.user.update({
-      //   where: { mobileNumber: phoneNumber },
-      //   data: { isVerified: true }
-      // });
-
-      res.status(200).json({
-        success: true,
-        message: "Phone number verified successfully",
-        data: {
-          phoneNumber: formattedPhone,
-          verified: true,
-        },
-      });
-    } else {
+    if (verificationCheck.status !== "approved") {
       res.status(400).json({
         success: false,
         message: "Invalid or expired OTP",
@@ -91,15 +93,63 @@ export const verifyPhoneOTP = async (
           status: verificationCheck.status,
         },
       });
+      return;
     }
+
+    const studentUpdate = await db.query(
+      `UPDATE "Students" 
+       SET "isPhoneVerified" = true, "updatedAt" = NOW()
+       WHERE "mobileNumber" = $1
+       RETURNING id, email, "firstName", "lastName"`,
+      [phoneNumber]
+    );
+
+    if (studentUpdate.rows.length > 0) {
+      res.status(200).json({
+        success: true,
+        message: "Phone number verified successfully",
+        data: {
+          phoneNumber: formattedPhone,
+          verified: true,
+          user: studentUpdate.rows[0],
+        },
+      });
+      return;
+    }
+
+    const professorUpdate = await db.query(
+      `UPDATE "Professors" 
+       SET "isPhoneVerified" = true, "updatedAt" = NOW()
+       WHERE "mobileNumber" = $1
+       RETURNING id, email, "firstName", "lastName"`,
+      [phoneNumber]
+    );
+
+    if (professorUpdate.rows.length > 0) {
+      res.status(200).json({
+        success: true,
+        message: "Phone number verified successfully",
+        data: {
+          phoneNumber: formattedPhone,
+          verified: true,
+          user: professorUpdate.rows[0],
+        },
+      });
+      return;
+    }
+
+    res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
   } catch (error: any) {
     console.error("Verify Phone OTP Error:", error);
 
-    if (error instanceof z.ZodError) {
+    if (error.name === "ZodError") {
       res.status(400).json({
         success: false,
         message: "Validation error",
-        errors: error.issues,
+        errors: error.errors,
       });
       return;
     }

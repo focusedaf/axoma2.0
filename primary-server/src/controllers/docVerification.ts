@@ -1,7 +1,8 @@
 import { Response } from "express";
-import prisma from "../db/db";
+import { db } from "../db/db";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload";
+
 
 export const addStudentDocs = async (
   req: AuthenticatedRequest,
@@ -27,16 +28,15 @@ export const addStudentDocs = async (
         `id_card_${studentId}_${Date.now()}`
       );
 
-      const doc = await prisma.studentDocument.create({
-        data: {
-          studentId,
-          docType: "id_card", 
-          url: uploadResult.url,
-          status: "pending",
+      const result = await db.query(
+        `INSERT INTO "StudentDocument" 
+        ("studentId", "docType", url, status)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *`,
+        [studentId, "id_card", uploadResult.url, "pending"]
+      );
 
-        },
-      });
-      createdDocs.push(doc);
+      createdDocs.push(result.rows[0]);
     }
 
     if (files.fee_receipt?.[0]) {
@@ -46,15 +46,15 @@ export const addStudentDocs = async (
         `fee_receipt_${studentId}_${Date.now()}`
       );
 
-      const doc = await prisma.studentDocument.create({
-        data: {
-          studentId,
-          docType: "fee_receipt",
-          url: uploadResult.url,
-          status: "pending",
-        },
-      });
-      createdDocs.push(doc);
+      const result = await db.query(
+        `INSERT INTO "StudentDocument" 
+        ("studentId", "docType", url, status)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *`,
+        [studentId, "fee_receipt", uploadResult.url, "pending"]
+      );
+
+      createdDocs.push(result.rows[0]);
     }
 
     return res.status(201).json({
@@ -64,11 +64,40 @@ export const addStudentDocs = async (
     });
   } catch (error) {
     console.error("Error adding student docs:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
+
+export const getStudentDocs = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  try {
+    const studentId = req.user!.userId;
+
+    const result = await db.query(
+      `SELECT * FROM "StudentDocument" 
+       WHERE "studentId" = $1 
+       ORDER BY "createdAt" DESC`,
+      [studentId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error fetching student docs:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 
 export const addProfessorDocs = async (
   req: AuthenticatedRequest,
@@ -94,15 +123,15 @@ export const addProfessorDocs = async (
         `id_card_${professorId}_${Date.now()}`
       );
 
-      const doc = await prisma.professorDocument.create({
-        data: {
-          professorId,
-          docType: "id_card",
-          url: uploadResult.url,
-          status: "pending",
-        },
-      });
-      createdDocs.push(doc);
+      const result = await db.query(
+        `INSERT INTO "ProfessorDocument" 
+        ("professorId", "docType", url, status)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *`,
+        [professorId, "id_card", uploadResult.url, "pending"]
+      );
+
+      createdDocs.push(result.rows[0]);
     }
 
     if (files.employment_letter?.[0]) {
@@ -112,15 +141,15 @@ export const addProfessorDocs = async (
         `employment_letter_${professorId}_${Date.now()}`
       );
 
-      const doc = await prisma.professorDocument.create({
-        data: {
-          professorId,
-          docType: "employment_letter",
-          url: uploadResult.url,
-          status: "pending",
-        },
-      });
-      createdDocs.push(doc);
+      const result = await db.query(
+        `INSERT INTO "ProfessorDocument" 
+        ("professorId", "docType", url, status)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *`,
+        [professorId, "employment_letter", uploadResult.url, "pending"]
+      );
+
+      createdDocs.push(result.rows[0]);
     }
 
     return res.status(201).json({
@@ -130,33 +159,10 @@ export const addProfessorDocs = async (
     });
   } catch (error) {
     console.error("Error adding professor docs:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
-  }
-};
-
-export const getStudentDocs = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const studentId = req.user!.userId;
-
-    const docs = await prisma.studentDocument.findMany({
-      where: { studentId },
-      orderBy: { createdAt: "desc" },
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
-
-    return res.status(200).json({
-      success: true,
-      data: docs,
-    });
-  } catch (error) {
-    console.error("Error fetching student docs:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -167,19 +173,22 @@ export const getProfessorDocs = async (
   try {
     const professorId = req.user!.userId;
 
-    const docs = await prisma.professorDocument.findMany({
-      where: { professorId },
-      orderBy: { createdAt: "desc" },
-    });
+    const result = await db.query(
+      `SELECT * FROM "ProfessorDocument" 
+       WHERE "professorId" = $1 
+       ORDER BY "createdAt" DESC`,
+      [professorId]
+    );
 
     return res.status(200).json({
       success: true,
-      data: docs,
+      data: result.rows,
     });
   } catch (error) {
     console.error("Error fetching professor docs:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

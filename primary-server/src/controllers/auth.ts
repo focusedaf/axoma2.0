@@ -1,476 +1,562 @@
 import { Request, Response } from "express";
-import prisma from "../db/db";
-import { newUser, loginSchema } from "../zod/zod";
+import { db } from "../db/db";
 import {
   hashPassword,
   verifyPassword,
   createAccessToken,
   createRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
   hashRefreshToken,
-  rotateTokens,
+  verifyRefreshToken,
+  AccessTokenPayload,
+  RefreshTokenPayload,
 } from "../utils/token";
+import { newUser, loginSchema } from "../zod/zod";
+import { AuthenticatedRequest } from "../middleware/auth";
+
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict" as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const setTokenCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken: string
+) => {
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie("refreshToken", refreshToken, cookieOptions);
+};
 
 export const studentRegistration = async (req: Request, res: Response) => {
   try {
-    const validation = newUser.safeParse(req.body);
-    if (!validation.success)
-      return res
-        .status(400)
-        .json({ success: false, message: "Validation failed" });
+    const validatedData = newUser.parse(req.body);
 
-    const {
-      firstName,
-      lastName,
-      mobileNumber,
-      email,
-      password,
-      walletAddress,
-    } = validation.data;
+    if (validatedData.role !== "student") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role for student registration",
+      });
+    }
 
-    const existingStudent = await prisma.students.findUnique({
-      where: { email },
-    });
-    if (existingStudent)
-      return res
-        .status(409)
-        .json({ success: false, message: "Email already in use" });
+    const existingUser = await db.query(
+      'SELECT id FROM "Students" WHERE email = $1 OR "mobileNumber" = $2 OR "walletAddress" = $3',
+      [
+        validatedData.email,
+        validatedData.mobileNumber,
+        validatedData.walletAddress,
+      ]
+    );
 
-    const existingWallet = await prisma.students.findUnique({
-      where: { walletAddress },
-    });
-    if (existingWallet)
-      return res
-        .status(409)
-        .json({ success: false, message: "Wallet address already in use" });
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists with this email, mobile, or wallet",
+      });
+    }
 
-    const hashedPwd = await hashPassword(password);
+    const hashedPassword = await hashPassword(validatedData.password);
 
-    const student = await prisma.students.create({
-      data: {
-        firstName,
-        lastName,
-        mobileNumber,
-        email,
-        password: hashedPwd,
-        walletAddress,
-        isVerified: false,
-      },
-    });
+    const userId = crypto.randomUUID();
+    const accessPayload: AccessTokenPayload = { userId, role: "student" };
+    const refreshPayload: RefreshTokenPayload = { userId, role: "student" };
 
-    return res.status(201).json({
-      success: true,
-      message: "Student registered successfully",
-      student: {
-        id: student.id,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        email: student.email,
-        mobileNumber: student.mobileNumber,
-        walletAddress: student.walletAddress,
-        isVerified: student.isVerified,
-        role: "student",
-        createdAt: student.createdAt,
-        updatedAt: student.updatedAt,
-      },
-    });
-  } catch (error) {
+    const accessToken = createAccessToken(
+      accessPayload,
+      ACCESS_TOKEN_SECRET,
+      "15m"
+    );
+    const refreshToken = createRefreshToken(
+      refreshPayload,
+      REFRESH_TOKEN_SECRET,
+      "7d"
+    );
+
+    const hashedRefreshToken = await hashRefreshToken(refreshToken);
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const result = await client.query(
+        `INSERT INTO "Students" 
+        (id, email, "firstName", "lastName", "mobileNumber", password, "walletAddress", "refreshToken")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, email, "firstName", "lastName", "mobileNumber", "walletAddress", "isVerified", "createdAt"`,
+        [
+          userId,
+          validatedData.email,
+          validatedData.firstName,
+          validatedData.lastName,
+          validatedData.mobileNumber,
+          hashedPassword,
+          validatedData.walletAddress,
+          hashedRefreshToken,
+        ]
+      );
+
+      await client.query(
+        `INSERT INTO "RoleMap" ("userId", role) VALUES ($1, $2)`,
+        [userId, "student"]
+      );
+
+      await client.query("COMMIT");
+
+      setTokenCookies(res, accessToken, refreshToken);
+
+      return res.status(201).json({
+        success: true,
+        message: "Student registered successfully",
+        data: {
+          user: result.rows[0],
+          accessToken,
+        },
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error: any) {
     console.error("Student registration error:", error);
-    res.status(500).json({ success: false, message: (error as Error).message });
+
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
 export const professorRegistration = async (req: Request, res: Response) => {
   try {
-    const validation = newUser.safeParse(req.body);
-    if (!validation.success)
-      return res
-        .status(400)
-        .json({ success: false, message: "Validation failed" });
+    const validatedData = newUser.parse(req.body);
 
-    const {
-      firstName,
-      lastName,
-      mobileNumber,
-      email,
-      password,
-      walletAddress,
-    } = validation.data;
+    if (validatedData.role !== "professor") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role for professor registration",
+      });
+    }
 
-    const existingProfessor = await prisma.professors.findUnique({
-      where: { email },
-    });
-    if (existingProfessor)
-      return res
-        .status(409)
-        .json({ success: false, message: "Email already in use" });
+    const existingUser = await db.query(
+      'SELECT id FROM "Professors" WHERE email = $1 OR "mobileNumber" = $2 OR "walletAddress" = $3',
+      [
+        validatedData.email,
+        validatedData.mobileNumber,
+        validatedData.walletAddress,
+      ]
+    );
 
-    const existingWallet = await prisma.professors.findUnique({
-      where: { walletAddress },
-    });
-    if (existingWallet)
-      return res
-        .status(409)
-        .json({ success: false, message: "Wallet address already in use" });
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "User already exists with this email, mobile, or wallet",
+      });
+    }
 
-    const hashedPwd = await hashPassword(password);
+    const hashedPassword = await hashPassword(validatedData.password);
 
-    const professor = await prisma.professors.create({
-      data: {
-        firstName,
-        lastName,
-        mobileNumber,
-        email,
-        password: hashedPwd,
-        walletAddress,
-        isVerified: false,
-      },
-    });
+    const userId = crypto.randomUUID();
+    const accessPayload: AccessTokenPayload = { userId, role: "professor" };
+    const refreshPayload: RefreshTokenPayload = { userId, role: "professor" };
 
-    return res.status(201).json({
-      success: true,
-      message: "Professor registered successfully",
-      professor: {
-        id: professor.id,
-        firstName: professor.firstName,
-        lastName: professor.lastName,
-        email: professor.email,
-        mobileNumber: professor.mobileNumber,
-        walletAddress: professor.walletAddress,
-        isVerified: professor.isVerified,
-        role: "professor",
-        createdAt: professor.createdAt,
-        updatedAt: professor.updatedAt,
-      },
-    });
-  } catch (error) {
+    const accessToken = createAccessToken(
+      accessPayload,
+      ACCESS_TOKEN_SECRET,
+      "15m"
+    );
+    const refreshToken = createRefreshToken(
+      refreshPayload,
+      REFRESH_TOKEN_SECRET,
+      "7d"
+    );
+
+    const hashedRefreshToken = await hashRefreshToken(refreshToken);
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const result = await client.query(
+        `INSERT INTO "Professors" 
+        (id, email, "firstName", "lastName", "mobileNumber", password, "walletAddress", "refreshToken")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, email, "firstName", "lastName", "mobileNumber", "walletAddress", "isVerified", "createdAt"`,
+        [
+          userId,
+          validatedData.email,
+          validatedData.firstName,
+          validatedData.lastName,
+          validatedData.mobileNumber,
+          hashedPassword,
+          validatedData.walletAddress,
+          hashedRefreshToken,
+        ]
+      );
+
+      await client.query(
+        `INSERT INTO "RoleMap" ("userId", role) VALUES ($1, $2)`,
+        [userId, "professor"]
+      );
+
+      await client.query("COMMIT");
+
+      setTokenCookies(res, accessToken, refreshToken);
+
+      return res.status(201).json({
+        success: true,
+        message: "Professor registered successfully",
+        data: {
+          user: result.rows[0],
+          accessToken,
+        },
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error: any) {
     console.error("Professor registration error:", error);
-    res.status(500).json({ success: false, message: (error as Error).message });
+
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
 export const studentLogin = async (req: Request, res: Response) => {
   try {
-    const validation = loginSchema.safeParse(req.body);
-    if (!validation.success)
-      return res
-        .status(400)
-        .json({ success: false, message: "Validation failed" });
+    const { email, password } = loginSchema.parse(req.body);
 
-    const { email, password } = validation.data;
-    const student = await prisma.students.findUnique({ where: { email } });
-    if (!student)
-      return res
-        .status(401)
-        .json({ success: false, message: "Student not registered" });
-
-    const isValidPwd = await verifyPassword(password, student.password);
-    if (!isValidPwd)
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
-
-    const accessToken = createAccessToken(
-      { userId: student.id, role: "student" },
-      process.env.ACCESS_TOKEN_SECRET!,
-      process.env.ACCESS_TOKEN_EXPIRY!
+    const result = await db.query(
+      `SELECT id, email, "firstName", "lastName", "mobileNumber", password, "walletAddress", "isVerified"
+       FROM "Students" WHERE email = $1`,
+      [email]
     );
-    const refreshToken = createRefreshToken(
-      { userId: student.id, role: "student" },
-      process.env.REFRESH_TOKEN_SECRET!,
-      process.env.REFRESH_TOKEN_EXPIRY!
-    );
-    const hashedRefreshToken = await hashRefreshToken(refreshToken);
 
-    await prisma.students.update({
-      where: { id: student.id },
-      data: { refreshToken: hashedRefreshToken },
-    });
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
+    const user = result.rows[0];
+
+    const isValidPassword = await verifyPassword(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const accessPayload: AccessTokenPayload = {
+      userId: user.id,
+      role: "student",
+    };
+    const refreshPayload: RefreshTokenPayload = {
+      userId: user.id,
+      role: "student",
     };
 
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .json({
-        success: true,
-        message: "Student logged in successfully",
-        user: {
-          id: student.id,
-          email: student.email,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          role: "student",
-        },
-      });
-  } catch (error) {
+    const accessToken = createAccessToken(
+      accessPayload,
+      ACCESS_TOKEN_SECRET,
+      "15m"
+    );
+    const refreshToken = createRefreshToken(
+      refreshPayload,
+      REFRESH_TOKEN_SECRET,
+      "7d"
+    );
+
+    const hashedRefreshToken = await hashRefreshToken(refreshToken);
+    await db.query(
+      `UPDATE "Students" SET "refreshToken" = $1, "updatedAt" = NOW() WHERE id = $2`,
+      [hashedRefreshToken, user.id]
+    );
+
+    setTokenCookies(res, accessToken, refreshToken);
+
+    delete user.password;
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: {
+        user,
+        accessToken,
+      },
+    });
+  } catch (error: any) {
     console.error("Student login error:", error);
-    res.status(500).json({ success: false, message: (error as Error).message });
+
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
 export const professorLogin = async (req: Request, res: Response) => {
   try {
-    const validation = loginSchema.safeParse(req.body);
-    if (!validation.success)
-      return res
-        .status(400)
-        .json({ success: false, message: "Validation failed" });
+    const { email, password } = loginSchema.parse(req.body);
 
-    const { email, password } = validation.data;
-    const professor = await prisma.professors.findUnique({ where: { email } });
-    if (!professor)
-      return res
-        .status(401)
-        .json({ success: false, message: "Professor not registered" });
+    const result = await db.query(
+      `SELECT id, email, "firstName", "lastName", "mobileNumber", password, "walletAddress", "isVerified"
+       FROM "Professors" WHERE email = $1`,
+      [email]
+    );
 
-    const isValidPwd = await verifyPassword(password, professor.password);
-    if (!isValidPwd)
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const user = result.rows[0];
+
+    const isValidPassword = await verifyPassword(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const accessPayload: AccessTokenPayload = {
+      userId: user.id,
+      role: "professor",
+    };
+    const refreshPayload: RefreshTokenPayload = {
+      userId: user.id,
+      role: "professor",
+    };
 
     const accessToken = createAccessToken(
-      { userId: professor.id, role: "professor" },
-      process.env.ACCESS_TOKEN_SECRET!,
-      process.env.ACCESS_TOKEN_EXPIRY!
+      accessPayload,
+      ACCESS_TOKEN_SECRET,
+      "15m"
     );
     const refreshToken = createRefreshToken(
-      { userId: professor.id, role: "professor" },
-      process.env.REFRESH_TOKEN_SECRET!,
-      process.env.REFRESH_TOKEN_EXPIRY!
+      refreshPayload,
+      REFRESH_TOKEN_SECRET,
+      "7d"
     );
+
     const hashedRefreshToken = await hashRefreshToken(refreshToken);
+    await db.query(
+      `UPDATE "Professors" SET "refreshToken" = $1, "updatedAt" = NOW() WHERE id = $2`,
+      [hashedRefreshToken, user.id]
+    );
 
-    await prisma.professors.update({
-      where: { id: professor.id },
-      data: { refreshToken: hashedRefreshToken },
+    setTokenCookies(res, accessToken, refreshToken);
+
+    delete user.password;
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: {
+        user,
+        accessToken,
+      },
     });
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
-    };
-
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .json({
-        success: true,
-        message: "Professor logged in successfully",
-        user: {
-          id: professor.id,
-          email: professor.email,
-          firstName: professor.firstName,
-          lastName: professor.lastName,
-          role: "professor",
-        },
-      });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Professor login error:", error);
-    res.status(500).json({ success: false, message: (error as Error).message });
-  }
-};
 
-
-export const me = async (req: Request, res: Response) => {
-  try {
-    const token =
-      req.cookies.accessToken || req.headers.authorization?.split(" ")[1];
-    if (!token)
-      return res
-        .status(401)
-        .json({ success: false, message: "Not authenticated" });
-
-    const decoded = verifyAccessToken(token, process.env.ACCESS_TOKEN_SECRET!);
-    if (!decoded)
-      return res.status(401).json({ success: false, message: "Invalid token" });
-
-    const { userId, role } = decoded as {
-      userId: string;
-      role: "student" | "professor";
-    };
-
-    let user;
-    if (role === "student") {
-      user = await prisma.students.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          mobileNumber: true,
-          email: true,
-          walletAddress: true,
-        },
-      });
-    } else {
-      user = await prisma.professors.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          mobileNumber: true,
-          email: true,
-          walletAddress: true,
-        },
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors,
       });
     }
 
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-
-    res.status(200).json({ success: true, user: { ...user, role } });
-  } catch (error) {
-    console.error("Get current user error:", error);
-    res.status(500).json({ success: false, message: (error as Error).message });
-  }
-};
-
-export const logoutUser = async (req: Request, res: Response) => {
-  try {
-    const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No refresh token found" });
-    }
-
-    const hashedToken = await hashRefreshToken(refreshToken);
-    const student = await prisma.students.findUnique({
-      where: { refreshToken: hashedToken },
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
-    if (student) {
-      await prisma.students.update({
-        where: { id: student.id },
-        data: { refreshToken: null },
+  }
+};
+
+export const me = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
       });
-    } else {
-      const professor = await prisma.professors.findUnique({
-        where: { refreshToken: hashedToken },
-      });
-      if (professor) {
-        await prisma.professors.update({
-          where: { id: professor.id },
-          data: { refreshToken: null },
-        });
-      }
     }
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
-    };
-
-    return res
-      .clearCookie("accessToken", cookieOptions)
-      .clearCookie("refreshToken", cookieOptions)
-      .status(200)
-      .json({ success: true, message: "Logged out successfully" });
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: req.user,
+      },
+    });
   } catch (error) {
-    console.error("Logout error:", error);
-    res.status(500).json({ success: false, message: (error as Error).message });
+    console.error("Me endpoint error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
 export const refreshTokens = async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
+
     if (!refreshToken) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Refresh token required" });
-    }
-
-    const decoded = verifyRefreshToken(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET!
-    );
-    if (!decoded) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid or expired refresh token" });
-    }
-
-    const { userId, role } = decoded as {
-      userId: string;
-      role: "student" | "professor";
-    };
-
-    const user =
-      role === "student"
-        ? await prisma.students.findUnique({ where: { id: userId } })
-        : await prisma.professors.findUnique({ where: { id: userId } });
-
-    if (!user || !user.refreshToken) {
       return res.status(401).json({
         success: false,
-        message: "User not found or no refresh token stored",
+        message: "Refresh token required",
       });
     }
 
-    const isValid = await verifyPassword(refreshToken, user.refreshToken);
-    if (!isValid) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid refresh token" });
+    const decoded = verifyRefreshToken(refreshToken, REFRESH_TOKEN_SECRET);
+    if (!decoded) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired refresh token",
+      });
     }
 
-    const { accessToken, refreshToken: newRefreshToken } = rotateTokens(
-      { userId: user.id, role },
-      { userId: user.id, role },
-      process.env.ACCESS_TOKEN_SECRET!,
-      process.env.REFRESH_TOKEN_SECRET!
+    const { userId, role } = decoded as RefreshTokenPayload;
+
+    const table = role === "student" ? "Students" : "Professors";
+    const result = await db.query(
+      `SELECT id, email, "firstName", "lastName", "refreshToken" FROM "${table}" WHERE id = $1`,
+      [userId]
     );
 
-    const hashedNewRefreshToken = await hashRefreshToken(newRefreshToken);
-
-    if (role === "student") {
-      await prisma.students.update({
-        where: { id: userId },
-        data: { refreshToken: hashedNewRefreshToken },
-      });
-    } else {
-      await prisma.professors.update({
-        where: { id: userId },
-        data: { refreshToken: hashedNewRefreshToken },
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
       });
     }
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite:
-        process.env.NODE_ENV === "production"
-          ? ("none" as const)
-          : ("lax" as const),
-      path: "/",
-    };
+    const user = result.rows[0];
 
-    return res
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", newRefreshToken, cookieOptions)
-      .status(200)
-      .json({ success: true, message: "Tokens refreshed successfully" });
+    const isValidRefreshToken = await verifyPassword(
+      refreshToken,
+      user.refreshToken
+    );
+
+    if (!isValidRefreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    const accessPayload: AccessTokenPayload = { userId, role };
+    const refreshPayload: RefreshTokenPayload = { userId, role };
+
+    const newAccessToken = createAccessToken(
+      accessPayload,
+      ACCESS_TOKEN_SECRET,
+      "15m"
+    );
+    const newRefreshToken = createRefreshToken(
+      refreshPayload,
+      REFRESH_TOKEN_SECRET,
+      "7d"
+    );
+
+    const hashedRefreshToken = await hashRefreshToken(newRefreshToken);
+    await db.query(
+      `UPDATE "${table}" SET "refreshToken" = $1, "updatedAt" = NOW() WHERE id = $2`,
+      [hashedRefreshToken, userId]
+    );
+
+    setTokenCookies(res, newAccessToken, newRefreshToken);
+
+    return res.status(200).json({
+      success: true,
+      message: "Tokens refreshed successfully",
+      data: {
+        accessToken: newAccessToken,
+      },
+    });
   } catch (error) {
     console.error("Refresh token error:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: (error as Error).message });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const logoutUser = async (req: Request, res: Response) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (refreshToken) {
+      const decoded = verifyRefreshToken(refreshToken, REFRESH_TOKEN_SECRET);
+
+      if (decoded) {
+        const { userId, role } = decoded as RefreshTokenPayload;
+        const table = role === "student" ? "Students" : "Professors";
+
+        await db.query(
+          `UPDATE "${table}" SET "refreshToken" = NULL, "updatedAt" = NOW() WHERE id = $1`,
+          [userId]
+        );
+      }
+    }
+
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

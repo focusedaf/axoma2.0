@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import prisma from "../db/db";
+import { db } from "../db/db";
 import { verifyAccessToken } from "../utils/token";
 
 export interface AuthenticatedRequest extends Request {
@@ -41,16 +41,20 @@ export const authMiddleware = async (
       role: "student" | "professor";
     };
 
-    const user =
-      role === "student"
-        ? await prisma.students.findUnique({ where: { id: userId } })
-        : await prisma.professors.findUnique({ where: { id: userId } });
+    // Query appropriate table based on role
+    const table = role === "student" ? "Students" : "Professors";
+    const result = await db.query(
+      `SELECT id, email, "firstName", "lastName" FROM "${table}" WHERE id = $1`,
+      [userId]
+    );
 
-    if (!user) {
+    if (result.rows.length === 0) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
     }
+
+    const user = result.rows[0];
 
     req.user = {
       userId: user.id,

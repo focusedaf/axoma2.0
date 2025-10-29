@@ -1,10 +1,11 @@
 import { Response } from "express";
-import prisma from "../db/db";
+import { db } from "../db/db";
 import { setupProfileSchema } from "../zod/zod";
 import { AuthenticatedRequest } from "../middleware/auth";
 
 const studentPartialSchema = setupProfileSchema.options[0].partial();
 const professorPartialSchema = setupProfileSchema.options[1].partial();
+
 
 export const setupStudentProfile = async (
   req: AuthenticatedRequest,
@@ -22,26 +23,56 @@ export const setupStudentProfile = async (
       });
     }
 
-    const existing = await prisma.studentProfile.findUnique({
-      where: { studentID: studentId },
-    });
-    if (existing)
-      return res
-        .status(409)
-        .json({ success: false, message: "Profile already exists" });
+    // Check if profile already exists
+    const existingProfile = await db.query(
+      `SELECT id FROM "StudentProfile" WHERE "studentID" = $1`,
+      [studentId]
+    );
 
-    const profile = await prisma.studentProfile.create({
-      data: { ...validation.data, studentID: studentId },
-    });
+    if (existingProfile.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Profile already exists",
+      });
+    }
+
+    // Create profile
+    const {
+      universityName,
+      collegeName,
+      majorName,
+      currentSem,
+      startYear,
+      gradYear,
+    } = validation.data;
+
+    const result = await db.query(
+      `INSERT INTO "StudentProfile" 
+      ("universityName", "collegeName", "majorName", "currentSem", "startYear", "gradYear", "studentID")
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        universityName,
+        collegeName,
+        majorName,
+        currentSem,
+        startYear,
+        gradYear,
+        studentId,
+      ]
+    );
 
     res.status(201).json({
       success: true,
       message: "Student profile created",
-      data: profile,
+      data: result.rows[0],
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Setup student profile error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -61,19 +92,53 @@ export const editStudentProfile = async (
       });
     }
 
-    const updated = await prisma.studentProfile.update({
-      where: { studentID: studentId },
-      data: validation.data,
-    });
+    // Build dynamic update query
+    const updates = validation.data;
+    const fields = Object.keys(updates).filter((key) => key !== "role");
+
+    if (fields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No fields to update",
+      });
+    }
+
+    // Build SET clause dynamically
+    const setClause = fields
+      .map((field, index) => `"${field}" = $${index + 1}`)
+      .join(", ");
+
+    const values = fields.map(
+      (field) => updates[field as keyof typeof updates]
+    );
+    values.push(studentId);
+
+    const result = await db.query(
+      `UPDATE "StudentProfile" 
+       SET ${setClause}, "updatedAt" = NOW()
+       WHERE "studentID" = $${values.length}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: "Student profile updated",
-      data: updated,
+      data: result.rows[0],
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Edit student profile error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -84,22 +149,29 @@ export const getStudentProfile = async (
   try {
     const studentId = req.user!.userId;
 
-    const profile = await prisma.studentProfile.findUnique({
-      where: { studentID: studentId },
-    });
-    if (!profile)
-      return res
-        .status(404)
-        .json({ success: false, message: "Profile not found" });
+    const result = await db.query(
+      `SELECT * FROM "StudentProfile" WHERE "studentID" = $1`,
+      [studentId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: "Student profile fetched",
-      data: profile,
+      data: result.rows[0],
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Get student profile error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -120,26 +192,56 @@ export const setupProfessorProfile = async (
       });
     }
 
-    const existing = await prisma.professorProfile.findUnique({
-      where: { professorID: professorId },
-    });
-    if (existing)
-      return res
-        .status(409)
-        .json({ success: false, message: "Profile already exists" });
+    // Check if profile already exists
+    const existingProfile = await db.query(
+      `SELECT id FROM "ProfessorProfile" WHERE "professorID" = $1`,
+      [professorId]
+    );
 
-    const profile = await prisma.professorProfile.create({
-      data: { ...validation.data, professorID: professorId },
-    });
+    if (existingProfile.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Profile already exists",
+      });
+    }
+
+    // Create profile
+    const {
+      universityName,
+      collegeName,
+      department,
+      designation,
+      employmentType,
+      joiningYear,
+    } = validation.data;
+
+    const result = await db.query(
+      `INSERT INTO "ProfessorProfile" 
+      ("universityName", "collegeName", department, designation, "employmentType", "joiningYear", "professorID")
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        universityName,
+        collegeName,
+        department,
+        designation,
+        employmentType,
+        joiningYear,
+        professorId,
+      ]
+    );
 
     res.status(201).json({
       success: true,
       message: "Professor profile created",
-      data: profile,
+      data: result.rows[0],
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Setup professor profile error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -159,19 +261,53 @@ export const editProfessorProfile = async (
       });
     }
 
-    const updated = await prisma.professorProfile.update({
-      where: { professorID: professorId },
-      data: validation.data,
-    });
+    // Build dynamic update query
+    const updates = validation.data;
+    const fields = Object.keys(updates).filter((key) => key !== "role");
+
+    if (fields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No fields to update",
+      });
+    }
+
+    // Build SET clause dynamically
+    const setClause = fields
+      .map((field, index) => `"${field}" = $${index + 1}`)
+      .join(", ");
+
+    const values = fields.map(
+      (field) => updates[field as keyof typeof updates]
+    );
+    values.push(professorId);
+
+    const result = await db.query(
+      `UPDATE "ProfessorProfile" 
+       SET ${setClause}, "updatedAt" = NOW()
+       WHERE "professorID" = $${values.length}
+       RETURNING *`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: "Professor profile updated",
-      data: updated,
+      data: result.rows[0],
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Edit professor profile error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -182,21 +318,28 @@ export const getProfessorProfile = async (
   try {
     const professorId = req.user!.userId;
 
-    const profile = await prisma.professorProfile.findUnique({
-      where: { professorID: professorId },
-    });
-    if (!profile)
-      return res
-        .status(404)
-        .json({ success: false, message: "Profile not found" });
+    const result = await db.query(
+      `SELECT * FROM "ProfessorProfile" WHERE "professorID" = $1`,
+      [professorId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
 
     res.status(200).json({
       success: true,
       message: "Professor profile fetched",
-      data: profile,
+      data: result.rows[0],
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Get professor profile error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

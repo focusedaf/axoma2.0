@@ -1,23 +1,21 @@
-import express, { Request, Response, NextFunction } from "express";
-import multer from "multer";
-import { forwardFrameToAI } from "../controllers/ai";
+import express, { Response, NextFunction } from "express";
+import { authMiddleware, AuthenticatedRequest } from "../middleware/auth";
+import { upload } from "../utils/cloudinaryUpload";
+import { analyzeFrame } from "../controllers/ai";
 
-const aiRouter = express.Router();
-const upload = multer(); 
+const AiRouter = express.Router();
 
-aiRouter.post(
-  "/send-frame",
+AiRouter.post(
+  "/analyze-frame",
+  authMiddleware,
   upload.single("frame"),
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const frame = req.file;
-      const result = await forwardFrameToAI(frame!);
-      res.status(200).json({ success: true, result });
-    } catch (err: any) {
-      console.error("AI Route error:", err);
-      res.status(500).json({ success: false, error: err.message });
+      await analyzeFrame(req, res);
+    } catch (error) {
+      next(error);
     }
   }
 );
 
-export default aiRouter;
+export default AiRouter;

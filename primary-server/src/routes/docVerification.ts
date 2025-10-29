@@ -1,11 +1,11 @@
 import express, { Response, NextFunction } from "express";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth";
-import { addStudentDocs,addProfessorDocs,getProfessorDocs,getStudentDocs } from "../controllers/verification";
+import { addStudentDocs,addProfessorDocs,getProfessorDocs,getStudentDocs } from "../controllers/docVerification";
 
-const verificationRouter = express.Router();
+const docVerificationRouter = express.Router();
 
 
-verificationRouter.post(
+docVerificationRouter.post(
   "/add-docs",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -24,7 +24,7 @@ verificationRouter.post(
 );
 
 
-verificationRouter.get(
+docVerificationRouter.get(
   "/get-docs",
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -42,4 +42,4 @@ verificationRouter.get(
   }
 );
 
-export default verificationRouter;
+export default docVerificationRouter;
