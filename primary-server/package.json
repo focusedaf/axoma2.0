@@ -28,12 +28,10 @@
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
     "pg": "^8.16.3",
-    "prisma": "^6.17.1",
     "twilio": "^5.10.4",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@prisma/client": "^6.18.0",
     "@sendgrid/mail": "^8.1.6",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.9",

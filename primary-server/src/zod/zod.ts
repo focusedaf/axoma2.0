@@ -106,10 +106,6 @@ export const verifyPhoneOTPSchema = z.object({
   code: z.string().min(4).max(10, "Invalid OTP code"),
 });
 
-export const verifyEmailOTPSchema = z.object({
-  email: emailSchema,
-  code: z.string().min(4).max(10, "Invalid OTP code"),
-});
 
 // Validation schemas for email verification
 export const sendVerificationEmailSchema = z.object({
