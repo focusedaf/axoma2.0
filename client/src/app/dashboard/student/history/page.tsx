@@ -102,11 +102,9 @@ const MOCK_HISTORY: HistoryExam[] = [
   },
 ];
 
-
 export default function StudentHistoryPage() {
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6 ml-10">Exam History</h1>
       <StudentHistoryTable exams={MOCK_HISTORY} />
     </div>
   );

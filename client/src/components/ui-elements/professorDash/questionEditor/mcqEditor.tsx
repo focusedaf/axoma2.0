@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
+
 
 interface McqEditorProps {
   initialData?: {
@@ -12,6 +14,7 @@ interface McqEditorProps {
     image?: string | null;
     options?: { id: string; text: string; isCorrect: boolean }[];
   };
+  onCancel: () => void;
   onSave: (question: {
     id?: string;
     type: "mcq";
@@ -21,7 +24,11 @@ interface McqEditorProps {
   }) => void;
 }
 
-export default function McqEditor({ initialData, onSave }: McqEditorProps) {
+export default function McqEditor({
+  initialData,
+  onSave,
+  onCancel,
+}: McqEditorProps) {
   const [text, setText] = useState(initialData?.text || "");
   const [image, setImage] = useState(initialData?.image || "");
   const [options, setOptions] = useState(
@@ -30,18 +37,45 @@ export default function McqEditor({ initialData, onSave }: McqEditorProps) {
       { id: uuidv4(), text: "", isCorrect: false },
       { id: uuidv4(), text: "", isCorrect: false },
       { id: uuidv4(), text: "", isCorrect: false },
-    ]
+    ],
   );
   const [uploading, setUploading] = useState(false);
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const url = await fetch(`/api/cloudinary-upload`).then((res) => res.json());
-    setImage(url.secure_url);
-    setUploading(false);
-  }
+ async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+   const file = e.target.files?.[0];
+   if (!file) return;
+
+   setUploading(true);
+
+   const formData = new FormData();
+   formData.append("file", file);
+   formData.append(
+     "upload_preset",
+     process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!,
+   );
+
+   try {
+     const res = await fetch(
+       `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+       {
+         method: "POST",
+         body: formData,
+       },
+     );
+
+     const data = await res.json();
+     if (!res.ok) throw new Error("Upload failed");
+
+     setImage(data.secure_url);
+
+     toast.success("Image uploaded successfully");
+   } catch (err) {
+     toast.error("Upload failed. Try again.");
+   }
+
+   setUploading(false);
+ }
+
 
   function submit() {
     onSave({
@@ -99,7 +133,10 @@ export default function McqEditor({ initialData, onSave }: McqEditorProps) {
         ))}
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
         <Button onClick={submit}>Save</Button>
       </div>
     </div>

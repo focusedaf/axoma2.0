@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { Eye, History, NotebookPen } from "lucide-react";
 
 export function SiteHeader() {
   const { user, isLoggedIn } = useAuth();
@@ -33,30 +34,52 @@ export function SiteHeader() {
         </h1>
 
         {userRole === "professor" && (
-          <Button
-            onClick={() => router.push("/dashboard/professor/create-exam")}
-          >
-            Create Exam
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => router.push("/dashboard/professor/create-exam")}
+            >
+              Create Exam
+            </Button>
+
+            <Button
+              variant="outline"
+              className="text-black"
+              onClick={() => router.push("/dashboard/professor/history")}
+            >
+              <Eye className="mr-2 h-4 w-4" /> View History
+            </Button>
+
+            <Button
+              variant="outline"
+              className="text-black"
+              onClick={() => router.push("/dashboard/professor/review-exam")}
+            >
+              <History className="mr-2 h-4 w-4" />
+              Review Exam
+            </Button>
+          </div>
         )}
 
         {userRole === "student" && (
           <div className="flex gap-2">
-            <Button onClick={() => router.push("/dashboard/student/take-exam")}>
-              Take Exam
+            <Button onClick={() => router.push("/dashboard/student/exams")}>
+              <NotebookPen className="mr-2 h-4 w-4" /> Take Exam
             </Button>
 
             <Button
               variant="outline"
+              className="text-black"
               onClick={() => router.push("/dashboard/student/results")}
             >
-              View Results
+              <Eye className="mr-2 h-4 w-4" /> View Results
             </Button>
 
             <Button
               variant="outline"
+              className="text-black"
               onClick={() => router.push("/dashboard/student/history")}
             >
+              <History className="mr-2 h-4 w-4" />
               Exam History
             </Button>
           </div>

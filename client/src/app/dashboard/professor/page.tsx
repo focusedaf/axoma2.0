@@ -20,25 +20,6 @@ export default function ProfessorDashboardPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="flex justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Let's help you create exams
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => router.push("/exams/take")}>
-              <NotebookPen className="mr-2 h-4 w-4" /> Create Exam
-            </Button>
-            <Button variant="outline" onClick={() => router.push("/results")}>
-              <File className="mr-2 h-4 w-4" /> Review Exam
-            </Button>
-            <Button variant="outline" onClick={() => router.push("/history")}>
-              <History className="mr-2 h-4 w-4" /> Exam History
-            </Button>
-          </div>
-        </div>
-
         <StatCards items={statCards} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-8">
           <div className="md:col-span-2">

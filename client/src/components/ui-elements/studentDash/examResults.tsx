@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export type ResultExam = {
   id: string;
@@ -69,9 +70,15 @@ export function ExamResult({ exams }: ExamResultProps) {
           )}
           {exams.map((exam) => (
             <TableRow key={exam.id}>
-              <TableCell>{exam.title}</TableCell>
-              <TableCell>{exam.course}</TableCell>
-              <TableCell>{formatAttemptedOn(exam.attemptedOn)}</TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.title}
+              </TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.course}
+              </TableCell>
+              <TableCell className="font-medium text-black">
+                {formatAttemptedOn(exam.attemptedOn)}
+              </TableCell>
               <TableCell>
                 <Badge variant={getStatusVariant(exam.status)}>
                   {exam.status}
@@ -82,7 +89,19 @@ export function ExamResult({ exams }: ExamResultProps) {
                   size="sm"
                   variant="outline"
                   disabled={exam.status === "Result Pending"}
-                  onClick={() => alert(`Downloading result for ${exam.id}`)}
+                  className="text-black"
+                  onClick={() => {
+                    if (exam.status === "Result Declared") {
+                      toast.promise(
+                        new Promise((resolve) => setTimeout(resolve, 1000)),
+                        {
+                          loading: "Preparing result...",
+                          success: `Result downloaded for "${exam.title}"`,
+                          error: "Download failed",
+                        },
+                      );
+                    }
+                  }}
                 >
                   Download
                 </Button>

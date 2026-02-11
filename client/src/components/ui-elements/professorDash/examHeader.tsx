@@ -27,7 +27,7 @@ export function ExamHeader({
         )}
         <div>
           <h1 className="text-2xl font-bold">Create manual exam</h1>
-          <p className="text-muted-foreground">
+          <p className="text-xl text-muted-foreground">
             Craft a new exam with a modern and intuitive interface
           </p>
         </div>
@@ -35,7 +35,7 @@ export function ExamHeader({
 
       <div className="flex gap-2">
         {onCancel && (
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="outline" className="  text-black" onClick={onCancel}>
             Cancel
           </Button>
         )}

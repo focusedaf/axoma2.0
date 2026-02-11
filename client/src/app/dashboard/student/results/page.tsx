@@ -92,11 +92,9 @@ const MOCK_RESULTS: ResultExam[] = [
   },
 ];
 
-
 const StudentResultsPage = () => {
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6 ml-10">Your Exam Results</h1>
       <ExamResult exams={MOCK_RESULTS} />
     </div>
   );

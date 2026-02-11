@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ExamData, Question } from "@/types/exam";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import DescriptiveEditor from "./descriptiveEditor";
 import McqEditor from "./mcqEditor";
@@ -34,7 +33,7 @@ export default function QuestionEditorDialog({
       text: data.text,
       type: data.type,
       image: data.image || null,
-      marks: initialData?.marks || 1, 
+      marks: initialData?.marks || 1,
       options:
         data.type === "mcq"
           ? data.options.map((o: any) => ({
@@ -44,6 +43,7 @@ export default function QuestionEditorDialog({
             }))
           : [],
     };
+
     onSave(question);
     setIsOpen(false);
   };
@@ -58,18 +58,20 @@ export default function QuestionEditorDialog({
         </DialogHeader>
 
         {examType === "descriptive" && (
-          <DescriptiveEditor initialData={initialData} onSave={handleSave} />
+          <DescriptiveEditor
+            initialData={initialData}
+            onSave={handleSave}
+            onCancel={() => setIsOpen(false)}
+          />
         )}
 
         {examType === "mcq" && (
-          <McqEditor initialData={initialData} onSave={handleSave} />
+          <McqEditor
+            initialData={initialData}
+            onSave={handleSave}
+            onCancel={() => setIsOpen(false)}
+          />
         )}
-
-        <div className="flex justify-end mt-4">
-          <Button variant="ghost" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );

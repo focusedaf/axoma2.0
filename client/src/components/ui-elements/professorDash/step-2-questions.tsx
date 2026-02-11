@@ -56,7 +56,7 @@ export function Step2Questions({ examData, setExamData }: Step2QuestionsProps) {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Question Bank</h2>
+        <h2 className="text-2xl font-semibold text-black">Question Bank</h2>
         <Button onClick={openEditorForNew}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Question
         </Button>

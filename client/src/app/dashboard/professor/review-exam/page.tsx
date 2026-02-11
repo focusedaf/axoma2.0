@@ -98,7 +98,6 @@ const MOCK_EXAMS: ReviewExams[] = [
 const ReviewExamPage = () => {
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6 ml-10">Review Exams</h1>
       <ReviewExam exams={MOCK_EXAMS} />
     </div>
   );

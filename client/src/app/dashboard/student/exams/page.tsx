@@ -5,7 +5,6 @@ import {
 import { ExamTabs } from "@/components/ui-elements/studentDash/examTabs";
 
 const allExams: Exam[] = [
-  // ------- LIVE (10) -------
   {
     id: "e1",
     title: "Networking Basics Quiz",
@@ -87,7 +86,6 @@ const allExams: Exam[] = [
     status: "Live",
   },
 
-  // ------- UPCOMING (10) -------
   {
     id: "e11",
     title: "Data Structures Midterm",
@@ -170,15 +168,12 @@ const allExams: Exam[] = [
   },
 ];
 
-
 export default function StudentExamPage() {
   const liveExams = allExams.filter((e) => e.status === "Live");
   const upcomingExams = allExams.filter((e) => e.status === "Upcoming");
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6 ml-10">Your Exams</h1>
-
       <ExamTabs
         liveCount={liveExams.length}
         upcomingCount={upcomingExams.length}

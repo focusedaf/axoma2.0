@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export type Exam = {
   id: string;
@@ -71,10 +72,16 @@ export function ExamHistory({ exams }: ExamHistoryProps) {
           )}
           {exams.map((exam) => (
             <TableRow key={exam.id}>
-              <TableCell>{exam.title}</TableCell>
-              <TableCell>{exam.course}</TableCell>
-              <TableCell>{formatEndedOn(exam.endedOn)}</TableCell>
-              <TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.title}
+              </TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.course}
+              </TableCell>
+              <TableCell className="font-medium text-black">
+                {formatEndedOn(exam.endedOn)}
+              </TableCell>
+              <TableCell className="font-medium text-black">
                 {exam.submissions.submitted} / {exam.submissions.total}
               </TableCell>
               <TableCell>
@@ -86,7 +93,9 @@ export function ExamHistory({ exams }: ExamHistoryProps) {
                 {exam.status === "Grading Complete" ? (
                   <Button
                     size="sm"
-                    onClick={() => alert(`Sharing results for ${exam.title}`)}
+                    onClick={() => {
+                      toast.success(`Results shared for ${exam.title}`);
+                    }}
                   >
                     Share Results
                   </Button>
@@ -94,7 +103,7 @@ export function ExamHistory({ exams }: ExamHistoryProps) {
                   <Button
                     size="sm"
                     onClick={() =>
-                      router.push(`/dashboard/professor/exam/${exam.id}`)
+                      router.push(`/dashboard/professor/review-exam`)
                     }
                   >
                     Review Exam

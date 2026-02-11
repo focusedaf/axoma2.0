@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export type ReviewExams = {
   id: string;
@@ -46,7 +47,6 @@ function getStatusVariant(status: ReviewExams["status"]) {
 }
 
 export function ReviewExam({ exams }: ReviewExamProps) {
-  const router = useRouter();
 
   return (
     <div className="border rounded-md">
@@ -71,10 +71,16 @@ export function ReviewExam({ exams }: ReviewExamProps) {
           )}
           {exams.map((exam) => (
             <TableRow key={exam.id}>
-              <TableCell>{exam.title}</TableCell>
-              <TableCell>{exam.course}</TableCell>
-              <TableCell>{formatConductedOn(exam.conductedOn)}</TableCell>
-              <TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.title}
+              </TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.course}
+              </TableCell>
+              <TableCell className="font-medium text-black">
+                {formatConductedOn(exam.conductedOn)}
+              </TableCell>
+              <TableCell className="font-medium text-black">
                 {exam.submissions.submitted} / {exam.submissions.total}
               </TableCell>
               <TableCell>
@@ -86,14 +92,18 @@ export function ReviewExam({ exams }: ReviewExamProps) {
                 {exam.status === "Pending Grading" ? (
                   <Button
                     size="sm"
-                    onClick={() => alert(`Downloading exam ${exam.title}`)}
+                    onClick={() => {
+                      toast.success(`Downloading exam ${exam.title}`);
+                    }}
                   >
                     Download
                   </Button>
                 ) : (
                   <Button
                     size="sm"
-                    onClick={() => alert(`Sharing results for ${exam.title}`)}
+                    onClick={() => {
+                      toast.success(`Results shared for ${exam.title}`);
+                    }}
                   >
                     Share Results
                   </Button>

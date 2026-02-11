@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export type HistoryExam = {
   id: string;
@@ -46,8 +46,6 @@ function getStatusVariant(status: HistoryExam["status"]) {
 }
 
 export function StudentHistoryTable({ exams }: StudentHistoryProps) {
-  const router = useRouter();
-
   return (
     <div className="border rounded-md">
       <Table className="text-center">
@@ -69,26 +67,54 @@ export function StudentHistoryTable({ exams }: StudentHistoryProps) {
               </TableCell>
             </TableRow>
           )}
+
           {exams.map((exam) => (
             <TableRow key={exam.id}>
-              <TableCell>{exam.title}</TableCell>
-              <TableCell>{exam.course}</TableCell>
-              <TableCell>{formatAttemptedOn(exam.attemptedOn)}</TableCell>
-              <TableCell>{exam.duration} mins</TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.title}
+              </TableCell>
+
+              <TableCell className="font-medium text-black">
+                {exam.course}
+              </TableCell>
+
+              <TableCell className="font-medium text-black">
+                {formatAttemptedOn(exam.attemptedOn)}
+              </TableCell>
+
+              <TableCell className="font-medium text-black">
+                {exam.duration} mins
+              </TableCell>
+
               <TableCell>
                 <Badge variant={getStatusVariant(exam.status)}>
                   {exam.status}
                 </Badge>
               </TableCell>
+
               <TableCell>
-                <Button
-                  size="sm"
-                  onClick={() =>
-                    router.push(`/dashboard/student/result/${exam.id}`)
-                  }
-                >
-                  View Result
-                </Button>
+                {exam.status === "Result Declared" ? (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => {
+                      toast.promise(
+                        new Promise((resolve) => setTimeout(resolve, 1000)),
+                        {
+                          loading: "Preparing result...",
+                          success: `Result downloaded for "${exam.title}"`,
+                          error: "Download failed",
+                        },
+                      );
+                    }}
+                  >
+                    Download Result
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="secondary" disabled>
+                    Awaiting Result
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))}

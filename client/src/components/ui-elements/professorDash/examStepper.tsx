@@ -21,7 +21,7 @@ export function ExamStepper({ currentStep }: ExamStepperProps) {
           <div className="flex flex-col items-center">
             <div
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full border-2",
+                "flex h-10 w-10 items-center justify-center rounded-full border-2 text-black",
                 currentStep > step.id
                   ? "border-primary bg-primary text-primary-foreground"
                   : currentStep === step.id

@@ -48,7 +48,8 @@ function getStatusVariant(status: Exam["status"]) {
 }
 
 export function ExamSchedule({ exams }: ExamScheduleProps) {
-//   const router = useRouter();
+  const router = useRouter();
+
   return (
     <div className="border rounded-md">
       <Table className="text-center">
@@ -70,22 +71,36 @@ export function ExamSchedule({ exams }: ExamScheduleProps) {
               </TableCell>
             </TableRow>
           )}
+
           {exams.map((exam) => (
             <TableRow key={exam.id}>
-              <TableCell className="font-medium">{exam.title}</TableCell>
-              <TableCell>{exam.course || "N/A"}</TableCell>
-              <TableCell>{formatScheduledOn(exam.scheduledOn)}</TableCell>
-              <TableCell>{exam.duration} mins</TableCell>
+              <TableCell className="font-medium text-black">
+                {exam.title}
+              </TableCell>
+
+              <TableCell className="font-medium text-black">
+                {exam.course || "N/A"}
+              </TableCell>
+
+              <TableCell className="font-medium text-black">
+                {formatScheduledOn(exam.scheduledOn)}
+              </TableCell>
+
+              <TableCell className="font-medium text-black">
+                {exam.duration} mins
+              </TableCell>
+
               <TableCell>
                 <Badge variant={getStatusVariant(exam.status)}>
                   {exam.status}
                 </Badge>
               </TableCell>
+
               <TableCell>
                 <Button
                   size="sm"
                   disabled={exam.status !== "Live"}
-                  //onClick={() => router.push(`/exam/${exam.id}`)}
+                  onClick={() => router.push(`/guidelines`)}
                 >
                   Take Exam
                 </Button>
