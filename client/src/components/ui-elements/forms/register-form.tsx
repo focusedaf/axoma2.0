@@ -79,7 +79,8 @@ export function RegisterForm({
 
       localStorage.setItem("pending_role", formData.role);
       localStorage.setItem("userPhone", formData.mobileNumber);
-    
+      localStorage.setItem("userEmail", formData.email);
+
       toast.success("Account created successfully!");
       router.push("/otp");
     } catch (error: any) {

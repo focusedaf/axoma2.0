@@ -70,9 +70,10 @@ export const verifyOtp = (phoneNumber: string, code: string) =>
   });
 
 
-export const sendEmailVerification = () =>
+export const sendEmailVerification = (email:string) =>
   primaryApi.post(
     endpoint(process.env.NEXT_PUBLIC_API_SEND_EMAIL_VERIFICATION),
+    { email },
   );
 
 export const verifyEmailToken = (token: string) =>
