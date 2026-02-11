@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import Metamask from "../buttons/Metamask";
 import RoleSelector from "../roleSelector";
-import { registerUser } from "@/lib/api";
+import { registerStudent, registerProfessor } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 export function RegisterForm({
@@ -59,37 +59,38 @@ export function RegisterForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validate wallet connection
     if (!walletAddress) {
       toast.error("Please connect your MetaMask wallet");
       return;
     }
 
+    if (!formData.role) {
+      toast.error("Please select a role");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const registrationData = await registerUser({
-        ...formData,
-        walletAddress,
-      });
-      const data = registrationData.data;
-      const fullName = `${data.user.firstName || ""} ${
-        data.user.lastName || ""
-      }`.trim();
-      login({ email: data.user.email, name: fullName });
-     
-      toast.success("Account created successfully!");
 
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push("/otp");
-      }, 1500);
+      const response =
+        formData.role === "professor"
+          ? await registerProfessor({ ...formData, walletAddress })
+          : await registerStudent({ ...formData, walletAddress });
+
+      localStorage.setItem("pending_role", formData.role);
+      localStorage.setItem("userPhone", formData.mobileNumber);
+    
+      toast.success("Account created successfully!");
+      router.push("/otp");
     } catch (error: any) {
-      setIsLoading(false);
       toast.error(
-        error?.response?.data?.message || "Error in creating account"
+        error?.response?.data?.message || "Error in creating account",
       );
+    } finally {
+      setIsLoading(false);
     }
   };
+
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

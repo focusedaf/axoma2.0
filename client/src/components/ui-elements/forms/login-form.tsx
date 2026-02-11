@@ -7,14 +7,13 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
-import { loginUser } from "@/lib/api";
+import { loginProfessor, loginStudent } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 export function LoginForm({
@@ -23,6 +22,7 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter();
   const { login } = useAuth();
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -38,48 +38,44 @@ export function LoginForm({
     }));
   };
 
-  const handleRegister = () => {
-    router.push("/register");
-  };
-
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleRegister = () => {
+    router.push("/register");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const role = localStorage.getItem("pending_role");
+
+    if (!role) {
+      toast.error("Role not found. Please register again.");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const loginData = await loginUser({
-        ...formData,
-      });
 
-      const data = loginData.data;
-      const fullName = `${data.user.firstName || ""} ${
-        data.user.lastName || ""
-      }`.trim();
+      if (role === "professor") {
+        await loginProfessor(formData);
+      } else {
+        await loginStudent(formData);
+      }
 
-      localStorage.setItem("userId", data.user.id);
-      localStorage.setItem("userEmail", data.user.email);
-      localStorage.setItem("userName", fullName);
-
-      login({
-        email: data.user.email,
-        name: fullName,
-        id: data.user.id,
-      });
-
-      toast.success("Logged In Successfully!");
-
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push("/dashboard");
-      }, 1500);
+      login();
+      localStorage.removeItem("pending_role");
+      localStorage.setItem("auth_role", role);
+      toast.success("Logged in successfully");
+      router.push("/dashboard");
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Error logging into account"
+        error?.response?.data?.message || "Error logging into account",
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -102,6 +98,7 @@ export function LoginForm({
               </a>
             </FieldDescription>
           </div>
+
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
@@ -114,6 +111,7 @@ export function LoginForm({
               required
             />
           </Field>
+
           <Field>
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <div className="relative">
@@ -130,7 +128,7 @@ export function LoginForm({
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -141,13 +139,10 @@ export function LoginForm({
               </button>
             </div>
           </Field>
+
           <Field>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <Spinner />
-              ) : (
-                <span className="flex items-center gap-4">Login</span>
-              )}
+            <Button type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? <Spinner /> : "Login"}
             </Button>
           </Field>
         </FieldGroup>

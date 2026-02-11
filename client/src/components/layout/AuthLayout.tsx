@@ -8,32 +8,26 @@ interface AuthLayoutProps {
   children: ReactNode;
 }
 
-const AL: React.FC<AuthLayoutProps> = ({ children }) => {
+const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const init = () => {
-      const email = localStorage.getItem("userEmail");
+    if (isLoggedIn === null) return;
 
-      if (!email) {
-        router.push("/register");
-        return;
-      }
+    if (isLoggedIn === false) {
+      router.push("/login");
+      return;
+    }
 
-      if (isLoggedIn === true) setIsLoading(false);
-      if (isLoggedIn === false) router.push("/login");
-    };
-
-    init();
+    setLoading(false);
   }, [isLoggedIn, router]);
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <LoaderSpinner color="white" />
+      <div className="flex h-screen w-screen items-center justify-center">
+        <LoaderSpinner />
       </div>
     );
   }
@@ -41,4 +35,4 @@ const AL: React.FC<AuthLayoutProps> = ({ children }) => {
   return <>{children}</>;
 };
 
-export default AL;
+export default AuthLayout;
