@@ -19,10 +19,10 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 
 const cookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production" ? true : false,
-  sameSite: process.env.NODE_ENV === "production" ? "lax" : "none",
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   path: "/",
-  maxAge: 7 * 24 * 60 * 60 * 1000, 
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 const setTokenCookies = (
@@ -32,7 +32,7 @@ const setTokenCookies = (
 ) => {
   res.cookie("accessToken", accessToken, {
     ...cookieOptions,
-    maxAge: 15 * 60 * 1000, 
+    maxAge: 15 * 60 * 1000,
   });
   res.cookie("refreshToken", refreshToken, cookieOptions);
 };
@@ -48,7 +48,6 @@ export const studentRegistration = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user exists
     const existingUser = await prisma.students.findFirst({
       where: {
         OR: [
@@ -192,8 +191,7 @@ export const professorRegistration = async (req: Request, res: Response) => {
 
     const hashedRefreshToken = await hashRefreshToken(refreshToken);
 
-   
-    const result = await prisma.$transaction(async (tx:any) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const professor = await tx.professors.create({
         data: {
           id: userId,

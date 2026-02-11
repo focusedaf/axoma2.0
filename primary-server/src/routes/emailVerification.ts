@@ -18,7 +18,7 @@ emailVerificationRouter.post(
   }
 );
 
-emailVerificationRouter.get(
+emailVerificationRouter.post(
   "/verify",
   async (req: express.Request, res: Response, next: NextFunction) => {
     try {

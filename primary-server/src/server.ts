@@ -9,6 +9,7 @@ import docVerificationRouter from "./routes/docVerification";
 import phoneVerificationRouter from "./routes/phoneVerification";
 import AiRouter from "./routes/ai";
 import UploadRouter from "./routes/preExam";
+import emailVerificationRouter from "./routes/emailVerification";
 
 const app = express();
 const PORT = 4000;
@@ -17,10 +18,10 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:3000",
-    credentials: true, 
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -28,6 +29,7 @@ app.use(cookieParser());
 // APIs
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/verify-phone", phoneVerificationRouter);
+app.use("/api/v1/verify-email", emailVerificationRouter);
 app.use("/api/v1/user", profileRouter);
 app.use("/api/v1/verify-docs", docVerificationRouter);
 app.use("/api/v1", AiRouter);
