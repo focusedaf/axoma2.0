@@ -3,6 +3,7 @@ import prisma from "../db/db";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 
+
 export const addStudentDocs = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -10,7 +11,10 @@ export const addStudentDocs = async (
   try {
     const studentId = req.user!.userId;
 
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
     if (!files?.id_card?.[0] && !files?.fee_receipt?.[0]) {
       return res.status(400).json({
         success: false,
@@ -20,11 +24,12 @@ export const addStudentDocs = async (
 
     const createdDocs = [];
 
+
     if (files.id_card?.[0]) {
       const uploadResult = await uploadToCloudinary(
-        files.id_card[0].buffer,
-        `students/${studentId}/id_card`,
-        `id_card_${studentId}_${Date.now()}`,
+        files.id_card[0],
+        `students/${studentId}`,
+        studentId,
       );
 
       const doc = await prisma.studentDocument.create({
@@ -39,11 +44,12 @@ export const addStudentDocs = async (
       createdDocs.push(doc);
     }
 
+  
     if (files.fee_receipt?.[0]) {
       const uploadResult = await uploadToCloudinary(
-        files.fee_receipt[0].buffer,
-        `students/${studentId}/fee_receipt`,
-        `fee_receipt_${studentId}_${Date.now()}`,
+        files.fee_receipt[0],
+        `students/${studentId}`,
+        studentId,
       );
 
       const doc = await prisma.studentDocument.create({
@@ -97,6 +103,7 @@ export const getStudentDocs = async (
   }
 };
 
+
 export const addProfessorDocs = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -104,7 +111,10 @@ export const addProfessorDocs = async (
   try {
     const professorId = req.user!.userId;
 
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
     if (!files?.id_card?.[0] && !files?.employment_letter?.[0]) {
       return res.status(400).json({
         success: false,
@@ -114,11 +124,12 @@ export const addProfessorDocs = async (
 
     const createdDocs = [];
 
+   
     if (files.id_card?.[0]) {
       const uploadResult = await uploadToCloudinary(
-        files.id_card[0].buffer,
-        `professors/${professorId}/id_card`,
-        `id_card_${professorId}_${Date.now()}`,
+        files.id_card[0],
+        `professors/${professorId}`,
+        professorId,
       );
 
       const doc = await prisma.professorDocument.create({
@@ -135,9 +146,9 @@ export const addProfessorDocs = async (
 
     if (files.employment_letter?.[0]) {
       const uploadResult = await uploadToCloudinary(
-        files.employment_letter[0].buffer,
-        `professors/${professorId}/employment_letter`,
-        `employment_letter_${professorId}_${Date.now()}`,
+        files.employment_letter[0],
+        `professors/${professorId}`,
+        professorId,
       );
 
       const doc = await prisma.professorDocument.create({

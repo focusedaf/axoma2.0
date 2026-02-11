@@ -1,13 +1,23 @@
 import express, { Response, NextFunction } from "express";
 import { authMiddleware, AuthenticatedRequest } from "../middleware/auth";
-import { addStudentDocs,addProfessorDocs,getProfessorDocs,getStudentDocs } from "../controllers/docVerification";
+import {
+  addStudentDocs,
+  addProfessorDocs,
+  getProfessorDocs,
+  getStudentDocs,
+} from "../controllers/docVerification";
+import { upload } from "../utils/cloudinaryUpload";
 
 const docVerificationRouter = express.Router();
-
 
 docVerificationRouter.post(
   "/add-docs",
   authMiddleware,
+  upload.fields([
+    { name: "id_card", maxCount: 1 },
+    { name: "fee_receipt", maxCount: 1 },
+    { name: "employment_letter", maxCount: 1 },
+  ]),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       if (req.user?.role === "student") {
@@ -20,9 +30,8 @@ docVerificationRouter.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
-
 
 docVerificationRouter.get(
   "/get-docs",
@@ -39,7 +48,7 @@ docVerificationRouter.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default docVerificationRouter;
