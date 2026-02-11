@@ -1,42 +1,40 @@
 import { Request, Response } from "express";
 import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
-import { db } from "../db/db";
+import prisma from "../db/db";
 import {
   sendVerificationEmailSchema,
   verifyEmailTokenSchema,
 } from "../zod/zod";
 import sendgridConfig from "../config/sendgrid/config";
 
-
 sgMail.setApiKey(sendgridConfig.apiKey);
 
 export const sendVerificationEmail = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { email } = sendVerificationEmailSchema.parse(req.body);
 
-    const studentResult = await db.query(
-      `SELECT id, "firstName", "isEmailVerified" FROM "Students" WHERE email = $1`,
-      [email]
-    );
+    // Check student first
+    let user = await prisma.students.findUnique({
+      where: { email },
+      select: { id: true, firstName: true, isEmailVerified: true },
+    });
 
-    const professorResult = await db.query(
-      `SELECT id, "firstName", "isEmailVerified" FROM "Professors" WHERE email = $1`,
-      [email]
-    );
+    let userType: "student" | "professor" | null = user ? "student" : null;
 
-    let user = null;
-    let userTable = "";
-
-    if (studentResult.rows.length > 0) {
-      user = studentResult.rows[0];
-      userTable = "Students";
-    } else if (professorResult.rows.length > 0) {
-      user = professorResult.rows[0];
-      userTable = "Professors";
+    // If not student, check professor
+    if (!user) {
+      const professor = await prisma.professors.findUnique({
+        where: { email },
+        select: { id: true, firstName: true, isEmailVerified: true },
+      });
+      if (professor) {
+        user = professor;
+        userType = "professor";
+      }
     }
 
     if (!user) {
@@ -58,17 +56,27 @@ export const sendVerificationEmail = async (
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const tokenExpiry = new Date(
-      Date.now() + sendgridConfig.verificationTokenExpiry * 60 * 60 * 1000
+      Date.now() + sendgridConfig.verificationTokenExpiry * 60 * 60 * 1000,
     );
 
-    await db.query(
-      `UPDATE "${userTable}" 
-       SET "verificationToken" = $1, 
-           "verificationTokenExpiry" = $2,
-           "updatedAt" = NOW()
-       WHERE id = $3`,
-      [verificationToken, tokenExpiry, user.id]
-    );
+    // Update user
+    if (userType === "student") {
+      await prisma.students.update({
+        where: { id: user.id },
+        data: {
+          verificationToken,
+          verificationTokenExpiry: tokenExpiry,
+        },
+      });
+    } else {
+      await prisma.professors.update({
+        where: { id: user.id },
+        data: {
+          verificationToken,
+          verificationTokenExpiry: tokenExpiry,
+        },
+      });
+    }
 
     const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
 
@@ -159,38 +167,42 @@ export const sendVerificationEmail = async (
   }
 };
 
-
 export const verifyEmailToken = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { token } = verifyEmailTokenSchema.parse(req.query);
 
-    const studentResult = await db.query(
-      `SELECT id, email, "firstName", "lastName", "verificationTokenExpiry"
-       FROM "Students" 
-       WHERE "verificationToken" = $1`,
-      [token]
-    );
+    // Check student first
+    let user = await prisma.students.findUnique({
+      where: { verificationToken: token },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        verificationTokenExpiry: true,
+      },
+    });
 
-    let user = null;
-    let userTable = "";
+    let userType: "student" | "professor" | null = user ? "student" : null;
 
-    if (studentResult.rows.length > 0) {
-      user = studentResult.rows[0];
-      userTable = "Students";
-    } else {
-      const professorResult = await db.query(
-        `SELECT id, email, "firstName", "lastName", "verificationTokenExpiry"
-         FROM "Professors" 
-         WHERE "verificationToken" = $1`,
-        [token]
-      );
-
-      if (professorResult.rows.length > 0) {
-        user = professorResult.rows[0];
-        userTable = "Professors";
+    // If not student, check professor
+    if (!user) {
+      const professor = await prisma.professors.findUnique({
+        where: { verificationToken: token },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          verificationTokenExpiry: true,
+        },
+      });
+      if (professor) {
+        user = professor;
+        userType = "professor";
       }
     }
 
@@ -202,7 +214,7 @@ export const verifyEmailToken = async (
       return;
     }
 
-    if (new Date() > new Date(user.verificationTokenExpiry)) {
+    if (new Date() > new Date(user.verificationTokenExpiry!)) {
       res.status(400).json({
         success: false,
         message: "Verification token has expired",
@@ -210,15 +222,26 @@ export const verifyEmailToken = async (
       return;
     }
 
-    await db.query(
-      `UPDATE "${userTable}" 
-       SET "isEmailVerified" = true,
-           "verificationToken" = NULL,
-           "verificationTokenExpiry" = NULL,
-           "updatedAt" = NOW()
-       WHERE id = $1`,
-      [user.id]
-    );
+    // Update user
+    if (userType === "student") {
+      await prisma.students.update({
+        where: { id: user.id },
+        data: {
+          isEmailVerified: true,
+          verificationToken: null,
+          verificationTokenExpiry: null,
+        },
+      });
+    } else {
+      await prisma.professors.update({
+        where: { id: user.id },
+        data: {
+          isEmailVerified: true,
+          verificationToken: null,
+          verificationTokenExpiry: null,
+        },
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -252,30 +275,25 @@ export const verifyEmailToken = async (
   }
 };
 
-
 export const resendVerificationEmail = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { email } = sendVerificationEmailSchema.parse(req.body);
 
-    const studentResult = await db.query(
-      `SELECT id, "isEmailVerified" FROM "Students" WHERE email = $1`,
-      [email]
-    );
+    // Check student first
+    let user = await prisma.students.findUnique({
+      where: { email },
+      select: { id: true, isEmailVerified: true },
+    });
 
-    const professorResult = await db.query(
-      `SELECT id, "isEmailVerified" FROM "Professors" WHERE email = $1`,
-      [email]
-    );
-
-    let user = null;
-
-    if (studentResult.rows.length > 0) {
-      user = studentResult.rows[0];
-    } else if (professorResult.rows.length > 0) {
-      user = professorResult.rows[0];
+    // If not student, check professor
+    if (!user) {
+      user = await prisma.professors.findUnique({
+        where: { email },
+        select: { id: true, isEmailVerified: true },
+      });
     }
 
     if (!user) {

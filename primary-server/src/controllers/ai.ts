@@ -3,9 +3,7 @@ import fetch from "node-fetch";
 import { FormData, File } from "formdata-node";
 import { AuthenticatedRequest } from "../middleware/auth";
 
-// =========================================================
-// UTILITY: Forward Frame to AI Server
-// =========================================================
+
 const forwardFrameToAI = async (frame: Express.Multer.File) => {
   if (!frame) {
     throw new Error("No frame provided");
@@ -39,9 +37,7 @@ const forwardFrameToAI = async (frame: Express.Multer.File) => {
   }
 };
 
-// =========================================================
-// CONTROLLER: Analyze Frame
-// =========================================================
+
 export const analyzeFrame = async (
   req: AuthenticatedRequest,
   res: Response

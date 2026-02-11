@@ -1,15 +1,14 @@
 import { Response } from "express";
-import { db } from "../db/db";
+import prisma from "../db/db";
 import { setupProfileSchema } from "../zod/zod";
 import { AuthenticatedRequest } from "../middleware/auth";
 
 const studentPartialSchema = setupProfileSchema.options[0].partial();
 const professorPartialSchema = setupProfileSchema.options[1].partial();
 
-
 export const setupStudentProfile = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const studentId = req.user!.userId;
@@ -23,20 +22,17 @@ export const setupStudentProfile = async (
       });
     }
 
-    // Check if profile already exists
-    const existingProfile = await db.query(
-      `SELECT id FROM "StudentProfile" WHERE "studentID" = $1`,
-      [studentId]
-    );
+    const existingProfile = await prisma.studentProfile.findUnique({
+      where: { studentID: studentId },
+    });
 
-    if (existingProfile.rows.length > 0) {
+    if (existingProfile) {
       return res.status(409).json({
         success: false,
         message: "Profile already exists",
       });
     }
 
-    // Create profile
     const {
       universityName,
       collegeName,
@@ -46,26 +42,22 @@ export const setupStudentProfile = async (
       gradYear,
     } = validation.data;
 
-    const result = await db.query(
-      `INSERT INTO "StudentProfile" 
-      ("universityName", "collegeName", "majorName", "currentSem", "startYear", "gradYear", "studentID")
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *`,
-      [
+    const profile = await prisma.studentProfile.create({
+      data: {
         universityName,
         collegeName,
         majorName,
-        currentSem,
-        startYear,
-        gradYear,
-        studentId,
-      ]
-    );
+        currentSem: parseInt(currentSem),
+        startYear: parseInt(startYear),
+        gradYear: parseInt(gradYear),
+        studentID: studentId,
+      },
+    });
 
     res.status(201).json({
       success: true,
       message: "Student profile created",
-      data: result.rows[0],
+      data: profile,
     });
   } catch (err) {
     console.error("Setup student profile error:", err);
@@ -78,7 +70,7 @@ export const setupStudentProfile = async (
 
 export const editStudentProfile = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const studentId = req.user!.userId;
@@ -92,49 +84,48 @@ export const editStudentProfile = async (
       });
     }
 
-    // Build dynamic update query
     const updates = validation.data;
-    const fields = Object.keys(updates).filter((key) => key !== "role");
+    
+    const { role, ...dataToUpdate } = updates as any;
 
-    if (fields.length === 0) {
+    if (Object.keys(dataToUpdate).length === 0) {
       return res.status(400).json({
         success: false,
         message: "No fields to update",
       });
     }
 
-    // Build SET clause dynamically
-    const setClause = fields
-      .map((field, index) => `"${field}" = $${index + 1}`)
-      .join(", ");
+    const processedData: any = { ...dataToUpdate };
+    if (processedData.currentSem) {
+      processedData.currentSem = parseInt(processedData.currentSem);
+    }
+    if (processedData.startYear) {
+      processedData.startYear = parseInt(processedData.startYear);
+    }
+    if (processedData.gradYear) {
+      processedData.gradYear = parseInt(processedData.gradYear);
+    }
 
-    const values = fields.map(
-      (field) => updates[field as keyof typeof updates]
-    );
-    values.push(studentId);
+    const profile = await prisma.studentProfile.update({
+      where: { studentID: studentId },
+      data: processedData,
+    });
 
-    const result = await db.query(
-      `UPDATE "StudentProfile" 
-       SET ${setClause}, "updatedAt" = NOW()
-       WHERE "studentID" = $${values.length}
-       RETURNING *`,
-      values
-    );
+    res.status(200).json({
+      success: true,
+      message: "Student profile updated",
+      data: profile,
+    });
+  } catch (err: any) {
+    console.error("Edit student profile error:", err);
 
-    if (result.rows.length === 0) {
+    if (err.code === "P2025") {
       return res.status(404).json({
         success: false,
         message: "Profile not found",
       });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Student profile updated",
-      data: result.rows[0],
-    });
-  } catch (err) {
-    console.error("Edit student profile error:", err);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -144,17 +135,16 @@ export const editStudentProfile = async (
 
 export const getStudentProfile = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const studentId = req.user!.userId;
 
-    const result = await db.query(
-      `SELECT * FROM "StudentProfile" WHERE "studentID" = $1`,
-      [studentId]
-    );
+    const profile = await prisma.studentProfile.findUnique({
+      where: { studentID: studentId },
+    });
 
-    if (result.rows.length === 0) {
+    if (!profile) {
       return res.status(404).json({
         success: false,
         message: "Profile not found",
@@ -164,7 +154,7 @@ export const getStudentProfile = async (
     res.status(200).json({
       success: true,
       message: "Student profile fetched",
-      data: result.rows[0],
+      data: profile,
     });
   } catch (err) {
     console.error("Get student profile error:", err);
@@ -175,10 +165,9 @@ export const getStudentProfile = async (
   }
 };
 
-
 export const setupProfessorProfile = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const professorId = req.user!.userId;
@@ -192,20 +181,17 @@ export const setupProfessorProfile = async (
       });
     }
 
-    // Check if profile already exists
-    const existingProfile = await db.query(
-      `SELECT id FROM "ProfessorProfile" WHERE "professorID" = $1`,
-      [professorId]
-    );
+    const existingProfile = await prisma.professorProfile.findUnique({
+      where: { professorID: professorId },
+    });
 
-    if (existingProfile.rows.length > 0) {
+    if (existingProfile) {
       return res.status(409).json({
         success: false,
         message: "Profile already exists",
       });
     }
 
-    // Create profile
     const {
       universityName,
       collegeName,
@@ -215,26 +201,22 @@ export const setupProfessorProfile = async (
       joiningYear,
     } = validation.data;
 
-    const result = await db.query(
-      `INSERT INTO "ProfessorProfile" 
-      ("universityName", "collegeName", department, designation, "employmentType", "joiningYear", "professorID")
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *`,
-      [
+    const profile = await prisma.professorProfile.create({
+      data: {
         universityName,
         collegeName,
         department,
         designation,
         employmentType,
-        joiningYear,
-        professorId,
-      ]
-    );
+        joiningYear: parseInt(joiningYear),
+        professorID: professorId,
+      },
+    });
 
     res.status(201).json({
       success: true,
       message: "Professor profile created",
-      data: result.rows[0],
+      data: profile,
     });
   } catch (err) {
     console.error("Setup professor profile error:", err);
@@ -247,7 +229,7 @@ export const setupProfessorProfile = async (
 
 export const editProfessorProfile = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const professorId = req.user!.userId;
@@ -261,49 +243,42 @@ export const editProfessorProfile = async (
       });
     }
 
-    // Build dynamic update query
     const updates = validation.data;
-    const fields = Object.keys(updates).filter((key) => key !== "role");
+    
+    const { role, ...dataToUpdate } = updates as any;
 
-    if (fields.length === 0) {
+    if (Object.keys(dataToUpdate).length === 0) {
       return res.status(400).json({
         success: false,
         message: "No fields to update",
       });
     }
 
-    // Build SET clause dynamically
-    const setClause = fields
-      .map((field, index) => `"${field}" = $${index + 1}`)
-      .join(", ");
+    const processedData: any = { ...dataToUpdate };
+    if (processedData.joiningYear) {
+      processedData.joiningYear = parseInt(processedData.joiningYear);
+    }
 
-    const values = fields.map(
-      (field) => updates[field as keyof typeof updates]
-    );
-    values.push(professorId);
+    const profile = await prisma.professorProfile.update({
+      where: { professorID: professorId },
+      data: processedData,
+    });
 
-    const result = await db.query(
-      `UPDATE "ProfessorProfile" 
-       SET ${setClause}, "updatedAt" = NOW()
-       WHERE "professorID" = $${values.length}
-       RETURNING *`,
-      values
-    );
+    res.status(200).json({
+      success: true,
+      message: "Professor profile updated",
+      data: profile,
+    });
+  } catch (err: any) {
+    console.error("Edit professor profile error:", err);
 
-    if (result.rows.length === 0) {
+    if (err.code === "P2025") {
       return res.status(404).json({
         success: false,
         message: "Profile not found",
       });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Professor profile updated",
-      data: result.rows[0],
-    });
-  } catch (err) {
-    console.error("Edit professor profile error:", err);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -313,17 +288,16 @@ export const editProfessorProfile = async (
 
 export const getProfessorProfile = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const professorId = req.user!.userId;
 
-    const result = await db.query(
-      `SELECT * FROM "ProfessorProfile" WHERE "professorID" = $1`,
-      [professorId]
-    );
+    const profile = await prisma.professorProfile.findUnique({
+      where: { professorID: professorId },
+    });
 
-    if (result.rows.length === 0) {
+    if (!profile) {
       return res.status(404).json({
         success: false,
         message: "Profile not found",
@@ -333,7 +307,7 @@ export const getProfessorProfile = async (
     res.status(200).json({
       success: true,
       message: "Professor profile fetched",
-      data: result.rows[0],
+      data: profile,
     });
   } catch (err) {
     console.error("Get professor profile error:", err);

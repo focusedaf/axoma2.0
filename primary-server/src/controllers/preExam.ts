@@ -26,12 +26,11 @@ export const uploadPreExamImage = async (
       return;
     }
 
-    // Upload to Cloudinary
     const result = await uploadToCloudinary(
       image.buffer,
-      `exam-photos/${userId}`, // folder structure: exam-photos/userId
-      `pre-exam-${userId}-${Date.now()}`, // unique public_id
-      false // it's an image
+      `exam-photos/${userId}`, 
+      `pre-exam-${userId}-${Date.now()}`, 
+      false 
     );
 
     console.log(`Pre-exam image uploaded for user ${userId}:`, {

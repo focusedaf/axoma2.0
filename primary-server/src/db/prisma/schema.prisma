@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// USER MODELS
+model Students {
+  id                       String             @id @default(uuid())
+  email                    String             @unique
+  firstName                String
+  lastName                 String
+  mobileNumber             String             @unique
+  password                 String
+  walletAddress            String             @unique
+  refreshToken             String?
+  isVerified               Boolean            @default(false)
+  isEmailVerified          Boolean            @default(false)
+  isPhoneVerified          Boolean            @default(false)
+  verificationToken        String?            @unique
+  verificationTokenExpiry  DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  
+  // Relations
+  profile                  StudentProfile?
+  documents                StudentDocument[]
+  
+  @@index([email])
+  @@index([mobileNumber])
+  @@index([walletAddress])
+  @@index([verificationToken])
+}
+
+model Professors {
+  id                       String               @id @default(uuid())
+  email                    String               @unique
+  firstName                String
+  lastName                 String
+  mobileNumber             String               @unique
+  password                 String
+  walletAddress            String               @unique
+  refreshToken             String?
+  isVerified               Boolean              @default(false)
+  isEmailVerified          Boolean              @default(false)
+  isPhoneVerified          Boolean              @default(false)
+  verificationToken        String?              @unique
+  verificationTokenExpiry  DateTime?
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  
+  // Relations
+  profile                  ProfessorProfile?
+  documents                ProfessorDocument[]
+  
+  @@index([email])
+  @@index([mobileNumber])
+  @@index([walletAddress])
+  @@index([verificationToken])
+}
+
+
+// ROLE MAPPING
+enum Role {
+  student
+  professor
+}
+
+model RoleMap {
+  id         String     @id @default(uuid())
+  userId     String
+  role       Role
+  createdAt  DateTime   @default(now())
+  
+  @@unique([userId, role])
+  @@index([userId])
+  @@index([role])
+}
+
+
+// PROFILE MODELS
+model StudentProfile {
+  id             String    @id @default(uuid())
+  universityName String
+  collegeName    String
+  majorName      String
+  currentSem     Int
+  startYear      Int
+  gradYear       Int
+  studentID      String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  student        Students  @relation(fields: [studentID], references: [id], onDelete: Cascade)
+  
+  @@index([studentID])
+}
+
+model ProfessorProfile {
+  id             String    @id @default(uuid())
+  universityName String
+  collegeName    String
+  department     String
+  designation    String
+  employmentType String
+  joiningYear    Int
+  professorID    String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  professor      Professors @relation(fields: [professorID], references: [id], onDelete: Cascade)
+  
+  @@index([professorID])
+}
+
+
+// DOCUMENT MODELS
+enum DocumentStatus {
+  pending
+  approved
+  rejected
+}
+
+enum StudentDocType {
+  id_card
+  fee_receipt
+}
+
+enum ProfessorDocType {
+  id_card
+  employment_letter
+}
+
+model StudentDocument {
+  id         String           @id @default(uuid())
+  studentId  String
+  docType    StudentDocType
+  url        String
+  status     DocumentStatus   @default(pending)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  
+  // Relations
+  student    Students         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@index([studentId])
+  @@index([status])
+  @@index([docType])
+}
+
+model ProfessorDocument {
+  id          String            @id @default(uuid())
+  professorId String
+  docType     ProfessorDocType
+  url         String
+  status      DocumentStatus    @default(pending)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  // Relations
+  professor   Professors        @relation(fields: [professorId], references: [id], onDelete: Cascade)
+  
+  @@index([professorId])
+  @@index([status])
+  @@index([docType])
+}

@@ -1,12 +1,11 @@
 import { Response } from "express";
-import { db } from "../db/db";
+import prisma from "../db/db";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { uploadToCloudinary } from "../utils/cloudinaryUpload";
 
-
 export const addStudentDocs = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const studentId = req.user!.userId;
@@ -25,36 +24,38 @@ export const addStudentDocs = async (
       const uploadResult = await uploadToCloudinary(
         files.id_card[0].buffer,
         `students/${studentId}/id_card`,
-        `id_card_${studentId}_${Date.now()}`
+        `id_card_${studentId}_${Date.now()}`,
       );
 
-      const result = await db.query(
-        `INSERT INTO "StudentDocument" 
-        ("studentId", "docType", url, status)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *`,
-        [studentId, "id_card", uploadResult.url, "pending"]
-      );
+      const doc = await prisma.studentDocument.create({
+        data: {
+          studentId,
+          docType: "id_card",
+          url: uploadResult.url,
+          status: "pending",
+        },
+      });
 
-      createdDocs.push(result.rows[0]);
+      createdDocs.push(doc);
     }
 
     if (files.fee_receipt?.[0]) {
       const uploadResult = await uploadToCloudinary(
         files.fee_receipt[0].buffer,
         `students/${studentId}/fee_receipt`,
-        `fee_receipt_${studentId}_${Date.now()}`
+        `fee_receipt_${studentId}_${Date.now()}`,
       );
 
-      const result = await db.query(
-        `INSERT INTO "StudentDocument" 
-        ("studentId", "docType", url, status)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *`,
-        [studentId, "fee_receipt", uploadResult.url, "pending"]
-      );
+      const doc = await prisma.studentDocument.create({
+        data: {
+          studentId,
+          docType: "fee_receipt",
+          url: uploadResult.url,
+          status: "pending",
+        },
+      });
 
-      createdDocs.push(result.rows[0]);
+      createdDocs.push(doc);
     }
 
     return res.status(201).json({
@@ -73,21 +74,19 @@ export const addStudentDocs = async (
 
 export const getStudentDocs = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const studentId = req.user!.userId;
 
-    const result = await db.query(
-      `SELECT * FROM "StudentDocument" 
-       WHERE "studentId" = $1 
-       ORDER BY "createdAt" DESC`,
-      [studentId]
-    );
+    const docs = await prisma.studentDocument.findMany({
+      where: { studentId },
+      orderBy: { createdAt: "desc" },
+    });
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: docs,
     });
   } catch (error) {
     console.error("Error fetching student docs:", error);
@@ -98,10 +97,9 @@ export const getStudentDocs = async (
   }
 };
 
-
 export const addProfessorDocs = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const professorId = req.user!.userId;
@@ -120,36 +118,38 @@ export const addProfessorDocs = async (
       const uploadResult = await uploadToCloudinary(
         files.id_card[0].buffer,
         `professors/${professorId}/id_card`,
-        `id_card_${professorId}_${Date.now()}`
+        `id_card_${professorId}_${Date.now()}`,
       );
 
-      const result = await db.query(
-        `INSERT INTO "ProfessorDocument" 
-        ("professorId", "docType", url, status)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *`,
-        [professorId, "id_card", uploadResult.url, "pending"]
-      );
+      const doc = await prisma.professorDocument.create({
+        data: {
+          professorId,
+          docType: "id_card",
+          url: uploadResult.url,
+          status: "pending",
+        },
+      });
 
-      createdDocs.push(result.rows[0]);
+      createdDocs.push(doc);
     }
 
     if (files.employment_letter?.[0]) {
       const uploadResult = await uploadToCloudinary(
         files.employment_letter[0].buffer,
         `professors/${professorId}/employment_letter`,
-        `employment_letter_${professorId}_${Date.now()}`
+        `employment_letter_${professorId}_${Date.now()}`,
       );
 
-      const result = await db.query(
-        `INSERT INTO "ProfessorDocument" 
-        ("professorId", "docType", url, status)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *`,
-        [professorId, "employment_letter", uploadResult.url, "pending"]
-      );
+      const doc = await prisma.professorDocument.create({
+        data: {
+          professorId,
+          docType: "employment_letter",
+          url: uploadResult.url,
+          status: "pending",
+        },
+      });
 
-      createdDocs.push(result.rows[0]);
+      createdDocs.push(doc);
     }
 
     return res.status(201).json({
@@ -168,21 +168,19 @@ export const addProfessorDocs = async (
 
 export const getProfessorDocs = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const professorId = req.user!.userId;
 
-    const result = await db.query(
-      `SELECT * FROM "ProfessorDocument" 
-       WHERE "professorId" = $1 
-       ORDER BY "createdAt" DESC`,
-      [professorId]
-    );
+    const docs = await prisma.professorDocument.findMany({
+      where: { professorId },
+      orderBy: { createdAt: "desc" },
+    });
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: docs,
     });
   } catch (error) {
     console.error("Error fetching professor docs:", error);

@@ -6,7 +6,7 @@ import { uploadPreExamImage } from "../controllers/preExam";
 const UploadRouter = express.Router();
 
 UploadRouter.post(
-  "/pre-exam-image",
+  "/preExamSetup",
   authMiddleware,
   upload.single("image"), // matches formData.append("image", blob)
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

@@ -51,7 +51,7 @@
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "types": ["node"]
   },
-  "include": ["src", "src/db/generated/prisma"]
+  "include": ["src"]
 }

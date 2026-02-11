@@ -1,30 +1,30 @@
 import { Request, Response } from "express";
 import twilio from "twilio";
-import { db } from "../db/db";
+import prisma from "../db/db";
 import { sendPhoneOTPSchema, verifyPhoneOTPSchema } from "../zod/zod";
 import twilioConfig from "../config/twilio/config";
 
 const client = twilio(twilioConfig.accountSid, twilioConfig.authToken);
 
-
 export const sendPhoneOTP = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { phoneNumber } = sendPhoneOTPSchema.parse(req.body);
 
-    const studentResult = await db.query(
-      `SELECT id FROM "Students" WHERE "mobileNumber" = $1`,
-      [phoneNumber]
-    );
+    // Check if phone number exists in either table
+    const student = await prisma.students.findUnique({
+      where: { mobileNumber: phoneNumber },
+      select: { id: true },
+    });
 
-    const professorResult = await db.query(
-      `SELECT id FROM "Professors" WHERE "mobileNumber" = $1`,
-      [phoneNumber]
-    );
+    const professor = await prisma.professors.findUnique({
+      where: { mobileNumber: phoneNumber },
+      select: { id: true },
+    });
 
-    if (studentResult.rows.length === 0 && professorResult.rows.length === 0) {
+    if (!student && !professor) {
       res.status(404).json({
         success: false,
         message: "Phone number not registered",
@@ -68,10 +68,9 @@ export const sendPhoneOTP = async (
   }
 };
 
-
 export const verifyPhoneOTP = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { phoneNumber, code } = verifyPhoneOTPSchema.parse(req.body);
@@ -96,43 +95,49 @@ export const verifyPhoneOTP = async (
       return;
     }
 
-    const studentUpdate = await db.query(
-      `UPDATE "Students" 
-       SET "isPhoneVerified" = true, "updatedAt" = NOW()
-       WHERE "mobileNumber" = $1
-       RETURNING id, email, "firstName", "lastName"`,
-      [phoneNumber]
-    );
+    // Try updating student first
+    const studentUpdate = await prisma.students.updateMany({
+      where: { mobileNumber: phoneNumber },
+      data: { isPhoneVerified: true },
+    });
 
-    if (studentUpdate.rows.length > 0) {
+    if (studentUpdate.count > 0) {
+      const user = await prisma.students.findUnique({
+        where: { mobileNumber: phoneNumber },
+        select: { id: true, email: true, firstName: true, lastName: true },
+      });
+
       res.status(200).json({
         success: true,
         message: "Phone number verified successfully",
         data: {
           phoneNumber: formattedPhone,
           verified: true,
-          user: studentUpdate.rows[0],
+          user,
         },
       });
       return;
     }
 
-    const professorUpdate = await db.query(
-      `UPDATE "Professors" 
-       SET "isPhoneVerified" = true, "updatedAt" = NOW()
-       WHERE "mobileNumber" = $1
-       RETURNING id, email, "firstName", "lastName"`,
-      [phoneNumber]
-    );
+    // Try updating professor
+    const professorUpdate = await prisma.professors.updateMany({
+      where: { mobileNumber: phoneNumber },
+      data: { isPhoneVerified: true },
+    });
 
-    if (professorUpdate.rows.length > 0) {
+    if (professorUpdate.count > 0) {
+      const user = await prisma.professors.findUnique({
+        where: { mobileNumber: phoneNumber },
+        select: { id: true, email: true, firstName: true, lastName: true },
+      });
+
       res.status(200).json({
         success: true,
         message: "Phone number verified successfully",
         data: {
           phoneNumber: formattedPhone,
           verified: true,
-          user: professorUpdate.rows[0],
+          user,
         },
       });
       return;
