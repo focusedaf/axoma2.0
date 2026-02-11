@@ -66,33 +66,35 @@ export const loginSchema = z.object({
 });
 
 // Profile validation
-const base = z.object({
-  universityName: z.string().trim(),
-  collegeName: z.string().trim(),
+const universitySchema = z.string().trim().min(2, "University name required");
+const collegeSchema = z.string().trim().min(2, "College name required");
+
+export const setupStudentProfileSchema = z.object({
+  universityName: universitySchema,
+  collegeName: collegeSchema,
+  majorName: z.string().trim().min(2, "Major required"),
+
+  currentSem: z.coerce.number().int().min(1, "Semester must be at least 1"),
+
+  startYear: z.coerce.number().int().min(1900, "Invalid start year"),
+
+  gradYear: z.coerce.number().int().min(1900, "Invalid graduation year"),
 });
 
-const studentProfile = z.object({
-  role: z.literal("student"),
-  majorName: z.string().trim(),
-  currentSem: z.string().trim(),
-  startYear: z.string().regex(/^\d{4}$/),
-  gradYear: z.string().regex(/^\d{4}$/),
-});
+export const editStudentProfileSchema = setupStudentProfileSchema.partial();
 
-const professorProfile = z.object({
-  role: z.literal("professor"),
-  department: z.string().trim(),
-  designation: z.string().trim(),
+export const setupProfessorProfileSchema = z.object({
+  universityName: universitySchema,
+  collegeName: collegeSchema,
+  department: z.string().trim().min(2, "Department required"),
+  designation: z.string().trim().min(2, "Designation required"),
   employmentType: z.enum(["full_time", "contract", "visiting"]),
-  joiningYear: z.string().regex(/^\d{4}$/),
+
+  joiningYear: z.coerce.number().int().min(1900, "Invalid joining year"),
 });
 
-export const setupProfileSchema = z.discriminatedUnion("role", [
-  studentProfile.merge(base),
-  professorProfile.merge(base),
-]);
+export const editProfessorProfileSchema = setupProfessorProfileSchema.partial();
 
-// Validation schemas for OTP requests
 export const sendPhoneOTPSchema = z.object({
   phoneNumber: mobileSchema,
 });
@@ -106,8 +108,6 @@ export const verifyPhoneOTPSchema = z.object({
   code: z.string().min(4).max(10, "Invalid OTP code"),
 });
 
-
-// Validation schemas for email verification
 export const sendVerificationEmailSchema = z.object({
   email: emailSchema,
 });

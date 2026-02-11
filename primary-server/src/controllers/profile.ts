@@ -1,23 +1,32 @@
 import { Response } from "express";
 import prisma from "../db/db";
-import { setupProfileSchema } from "../zod/zod";
 import { AuthenticatedRequest } from "../middleware/auth";
+import {
+  setupStudentProfileSchema,
+  editStudentProfileSchema,
+  setupProfessorProfileSchema,
+  editProfessorProfileSchema,
+} from "../zod/zod";
 
-const studentPartialSchema = setupProfileSchema.options[0].partial();
-const professorPartialSchema = setupProfileSchema.options[1].partial();
 
 export const setupStudentProfile = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
   try {
-    const studentId = req.user!.userId;
+    if (req.user?.role !== "student") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
 
-    const validation = setupProfileSchema.options[0].safeParse(req.body);
+    const studentId = req.user.userId;
+
+    const validation = setupStudentProfileSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
         errors: validation.error.issues,
       });
     }
@@ -33,23 +42,9 @@ export const setupStudentProfile = async (
       });
     }
 
-    const {
-      universityName,
-      collegeName,
-      majorName,
-      currentSem,
-      startYear,
-      gradYear,
-    } = validation.data;
-
     const profile = await prisma.studentProfile.create({
       data: {
-        universityName,
-        collegeName,
-        majorName,
-        currentSem: parseInt(currentSem),
-        startYear: parseInt(startYear),
-        gradYear: parseInt(gradYear),
+        ...validation.data,
         studentID: studentId,
       },
     });
@@ -59,8 +54,8 @@ export const setupStudentProfile = async (
       message: "Student profile created",
       data: profile,
     });
-  } catch (err) {
-    console.error("Setup student profile error:", err);
+  } catch (error) {
+    console.error("Setup student profile error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -73,42 +68,33 @@ export const editStudentProfile = async (
   res: Response,
 ) => {
   try {
-    const studentId = req.user!.userId;
+    if (req.user?.role !== "student") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
 
-    const validation = studentPartialSchema.safeParse(req.body);
+    const studentId = req.user.userId;
+
+    const validation = editStudentProfileSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
         errors: validation.error.issues,
       });
     }
 
-    const updates = validation.data;
-    
-    const { role, ...dataToUpdate } = updates as any;
-
-    if (Object.keys(dataToUpdate).length === 0) {
+    if (Object.keys(validation.data).length === 0) {
       return res.status(400).json({
         success: false,
         message: "No fields to update",
       });
     }
 
-    const processedData: any = { ...dataToUpdate };
-    if (processedData.currentSem) {
-      processedData.currentSem = parseInt(processedData.currentSem);
-    }
-    if (processedData.startYear) {
-      processedData.startYear = parseInt(processedData.startYear);
-    }
-    if (processedData.gradYear) {
-      processedData.gradYear = parseInt(processedData.gradYear);
-    }
-
     const profile = await prisma.studentProfile.update({
       where: { studentID: studentId },
-      data: processedData,
+      data: validation.data,
     });
 
     res.status(200).json({
@@ -117,8 +103,6 @@ export const editStudentProfile = async (
       data: profile,
     });
   } catch (err: any) {
-    console.error("Edit student profile error:", err);
-
     if (err.code === "P2025") {
       return res.status(404).json({
         success: false,
@@ -126,6 +110,7 @@ export const editStudentProfile = async (
       });
     }
 
+    console.error("Edit student profile error:", err);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -138,7 +123,14 @@ export const getStudentProfile = async (
   res: Response,
 ) => {
   try {
-    const studentId = req.user!.userId;
+    if (req.user?.role !== "student") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    const studentId = req.user.userId;
 
     const profile = await prisma.studentProfile.findUnique({
       where: { studentID: studentId },
@@ -153,11 +145,10 @@ export const getStudentProfile = async (
 
     res.status(200).json({
       success: true,
-      message: "Student profile fetched",
       data: profile,
     });
-  } catch (err) {
-    console.error("Get student profile error:", err);
+  } catch (error) {
+    console.error("Get student profile error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -165,18 +156,25 @@ export const getStudentProfile = async (
   }
 };
 
+
 export const setupProfessorProfile = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
   try {
-    const professorId = req.user!.userId;
+    if (req.user?.role !== "professor") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
 
-    const validation = setupProfileSchema.options[1].safeParse(req.body);
+    const professorId = req.user.userId;
+
+    const validation = setupProfessorProfileSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
         errors: validation.error.issues,
       });
     }
@@ -192,23 +190,9 @@ export const setupProfessorProfile = async (
       });
     }
 
-    const {
-      universityName,
-      collegeName,
-      department,
-      designation,
-      employmentType,
-      joiningYear,
-    } = validation.data;
-
     const profile = await prisma.professorProfile.create({
       data: {
-        universityName,
-        collegeName,
-        department,
-        designation,
-        employmentType,
-        joiningYear: parseInt(joiningYear),
+        ...validation.data,
         professorID: professorId,
       },
     });
@@ -218,8 +202,8 @@ export const setupProfessorProfile = async (
       message: "Professor profile created",
       data: profile,
     });
-  } catch (err) {
-    console.error("Setup professor profile error:", err);
+  } catch (error) {
+    console.error("Setup professor profile error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -232,36 +216,33 @@ export const editProfessorProfile = async (
   res: Response,
 ) => {
   try {
-    const professorId = req.user!.userId;
+    if (req.user?.role !== "professor") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
 
-    const validation = professorPartialSchema.safeParse(req.body);
+    const professorId = req.user.userId;
+
+    const validation = editProfessorProfileSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
         errors: validation.error.issues,
       });
     }
 
-    const updates = validation.data;
-    
-    const { role, ...dataToUpdate } = updates as any;
-
-    if (Object.keys(dataToUpdate).length === 0) {
+    if (Object.keys(validation.data).length === 0) {
       return res.status(400).json({
         success: false,
         message: "No fields to update",
       });
     }
 
-    const processedData: any = { ...dataToUpdate };
-    if (processedData.joiningYear) {
-      processedData.joiningYear = parseInt(processedData.joiningYear);
-    }
-
     const profile = await prisma.professorProfile.update({
       where: { professorID: professorId },
-      data: processedData,
+      data: validation.data,
     });
 
     res.status(200).json({
@@ -270,8 +251,6 @@ export const editProfessorProfile = async (
       data: profile,
     });
   } catch (err: any) {
-    console.error("Edit professor profile error:", err);
-
     if (err.code === "P2025") {
       return res.status(404).json({
         success: false,
@@ -279,6 +258,7 @@ export const editProfessorProfile = async (
       });
     }
 
+    console.error("Edit professor profile error:", err);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -291,7 +271,14 @@ export const getProfessorProfile = async (
   res: Response,
 ) => {
   try {
-    const professorId = req.user!.userId;
+    if (req.user?.role !== "professor") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    const professorId = req.user.userId;
 
     const profile = await prisma.professorProfile.findUnique({
       where: { professorID: professorId },
@@ -306,11 +293,10 @@ export const getProfessorProfile = async (
 
     res.status(200).json({
       success: true,
-      message: "Professor profile fetched",
       data: profile,
     });
-  } catch (err) {
-    console.error("Get professor profile error:", err);
+  } catch (error) {
+    console.error("Get professor profile error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
