@@ -49,30 +49,40 @@ export function LoginForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const role = localStorage.getItem("pending_role");
-
-    if (!role) {
-      toast.error("Role not found. Please register again.");
-      return;
-    }
-
     try {
       setIsLoading(true);
 
-      if (role === "professor") {
-        await loginProfessor(formData);
-      } else {
+      let role: "student" | "professor" = "student";
+      let loginSuccessful = false;
+
+      try {
         await loginStudent(formData);
+        role = "student";
+        loginSuccessful = true;
+      } catch (studentError: any) {
+      
+        if (studentError?.response?.status === 401) {
+          try {
+            await loginProfessor(formData);
+            role = "professor";
+            loginSuccessful = true;
+          } catch (professorError: any) {
+            throw professorError;
+          }
+        } else {
+          throw studentError;
+        }
       }
 
-      login();
-      localStorage.removeItem("pending_role");
-      localStorage.setItem("auth_role", role);
-      toast.success("Logged in successfully");
-      router.push("/dashboard");
+      if (loginSuccessful) {
+        login();
+        localStorage.setItem("auth_role", role);
+        toast.success("Logged in successfully");
+        router.push("/dashboard");
+      }
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Error logging into account",
+        error?.response?.data?.message || "Invalid email or password",
       );
     } finally {
       setIsLoading(false);
