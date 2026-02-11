@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import {
   statCards,
   activeExams,
@@ -13,14 +13,15 @@ import { QuickActionsCard } from "@/components/ui-elements/professorDash/quickAc
 import { Button } from "@/components/ui/button";
 import { File, History, NotebookPen } from "lucide-react";
 import { useRouter } from "next/navigation";
+
 export default function ProfessorDashboardPage() {
   const router = useRouter();
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">Welcome, John Doe!</h1>
             <p className="text-sm text-muted-foreground">
               Let's help you create exams
             </p>

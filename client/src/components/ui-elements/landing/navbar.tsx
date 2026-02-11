@@ -13,7 +13,7 @@ type NavItem = { label: string; href: string; icon: React.ReactNode };
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, user } = useAuth();
   const router = useRouter();
 
   const publicNavLinks: NavItem[] = [
@@ -40,9 +40,18 @@ export default function Navbar() {
     },
   ];
 
+  const getDashboardRoute = () => {
+    if (!user?.role) return "/dashboard";
+
+    if (user.role === "student") return "/dashboard/student";
+    if (user.role === "professor") return "/dashboard/professor";
+
+    return "/dashboard";
+  };
+
   const authenticatedNavLinks: NavItem[] = [
     {
-      href: "/dashboard",
+      href: getDashboardRoute(),
       label: "Dashboard",
       icon: <Home className="h-4 w-4" />,
     },

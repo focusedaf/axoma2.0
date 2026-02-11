@@ -1,4 +1,5 @@
 "use client";
+
 import {
   IconDotsVertical,
   IconLogout,
@@ -26,8 +27,12 @@ import { toast } from "sonner";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { userName, userEmail, logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
+
+  const userName = user?.name;
+  const userEmail = user?.email;
+  const avatarFallback = userName?.[0]?.toUpperCase() || "U";
 
   const handleEditProfile = () => {
     // router.push("/dashboard/profile");
@@ -37,8 +42,6 @@ export function NavUser() {
     await logout();
     toast.success("Logged out successfully!");
   };
-
-  const avatarFallback = userName?.[0]?.toUpperCase() || "U";
 
   return (
     <SidebarMenu>
@@ -63,7 +66,7 @@ export function NavUser() {
                   {userName || "Loading..."}
                 </span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {userEmail || "Fetching user..."}
+                  {userEmail || "Fetching..."}
                 </span>
               </div>
               <IconDotsVertical className="ml-auto size-4" />
@@ -92,7 +95,7 @@ export function NavUser() {
                     {userName || "Loading..."}
                   </span>
                   <span className="text-muted-foreground truncate text-xs">
-                    {userEmail || "Fetching user..."}
+                    {userEmail || "Fetching..."}
                   </span>
                 </div>
               </div>

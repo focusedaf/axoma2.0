@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import {
   IconSend,
@@ -19,18 +20,14 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 const data = {
-  user: {
-    name: "morpheus",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: {
-    common: [
-      { title: "Home", url: "/", icon: IconHome },
-      { title: "Dashboard", url: "/dashboard", icon: IconSquare },
-    ],
+    common: [{ title: "Home", url: "/", icon: IconHome }],
     professor: [
-      { title: "Create Exams", url: "/dashboard/create-exam", icon: IconSend },
+      {
+        title: "Create Exams",
+        url: "/dashboard/professor/create-exam",
+        icon: IconSend,
+      },
       {
         title: "Review Exams",
         url: "/dashboard/professor/review-exam",
@@ -55,25 +52,32 @@ const data = {
 };
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  const { userRole } = useAuth();
+  const { user } = useAuth();
+  const userRole = user?.role as "professor" | "student" | undefined;
+
+  const roleDashboard =
+    userRole === "student"
+      ? { title: "Dashboard", url: "/dashboard/student", icon: IconSquare }
+      : userRole === "professor"
+        ? { title: "Dashboard", url: "/dashboard/professor", icon: IconSquare }
+        : null;
 
   const items = [
-    ...(data.navMain.common || []),
-    ...(userRole && data.navMain[userRole as "professor" | "student"]
-      ? data.navMain[userRole as "professor" | "student"]
-      : []),
+    ...data.navMain.common,
+    ...(roleDashboard ? [roleDashboard] : []),
+    ...(userRole ? data.navMain[userRole] : []),
   ];
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="flex flex-col items-center justify-center gap-2 p-4 border-b border-white/10">
-        <div className="flex items-center justify-start w-full px-2 py-1">
-          <span className="font-semibold text-lg">Axoma</span>
-        </div>
+      <SidebarHeader className="p-4 border-b">
+        <span className="font-semibold text-3xl ">Axoma</span>
       </SidebarHeader>
+
       <SidebarContent className="p-4">
         <NavMain items={items} />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>

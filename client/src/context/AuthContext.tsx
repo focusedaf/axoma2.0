@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const hydrateFromSession = async () => {
     try {
       const resp = await getCurrentUser();
-      console.log("🔍 API Response:", resp?.data); 
+      console.log(" API Response:", resp?.data); 
 
       const u = resp?.data?.data?.user; 
 
