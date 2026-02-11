@@ -3,10 +3,8 @@ import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { createProfile,editProfile } from "@/lib/api";
+import { createProfile, editProfile } from "@/lib/api";
 
 interface StudentProfile {
   universityName?: string;
@@ -17,13 +15,17 @@ interface StudentProfile {
   gradYear?: string;
 }
 
+interface StudentProfileFormProps {
+  className?: string;
+  existingData?: StudentProfile;
+  onSuccess?: () => void;
+}
+
 const StudentProfileForm = ({
   className,
   existingData,
-}: {
-  className?: string;
-  existingData?: StudentProfile;
-}) => {
+  onSuccess,
+}: StudentProfileFormProps) => {
   const [formData, setFormData] = useState<StudentProfile>({
     universityName: "",
     collegeName: "",
@@ -32,6 +34,7 @@ const StudentProfileForm = ({
     startYear: "",
     gradYear: "",
   });
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -43,36 +46,47 @@ const StudentProfileForm = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-   e.preventDefault();
-   setIsLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-   try {
-     let res;
-     if (existingData) {
-       res = await editProfile(formData);
-       toast.success("Profile updated successfully!");
-     } else {
-       res = await createProfile(formData);
-       toast.success("Profile created successfully!");
-     }
-     setFormData(res.data.data);
-   } catch (err: any) {
-     console.error(err);
-     toast.error(err?.response?.data?.message || "Error saving profile");
-   } finally {
-     setIsLoading(false);
-   }
- };
+    try {
+      const payload = {
+        universityName: formData.universityName,
+        collegeName: formData.collegeName,
+        majorName: formData.majorName,
+        currentSem: Number(formData.currentSem),
+        startYear: formData.startYear,
+        gradYear: formData.gradYear,
+      };
+      
+      let res;
+
+      try {
+        res = await createProfile(payload);
+        toast.success("Profile saved successfully!");
+      } catch (err: any) {
+        if (err?.response?.status === 409) {
+          res = await editProfile(payload);
+          toast.success("Profile updated successfully!");
+        } else {
+          throw err;
+        }
+      }
+
+      setFormData(res.data.data);
+
+      if (onSuccess) onSuccess();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Error saving profile");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-8 space-x-10 w-full md:max-w-7xl",
-        className
-      )}
-    >
-      <form onSubmit={handleSubmit}>
+    <div className={cn("flex flex-col gap-8 w-full md:max-w-7xl", className)}>
+      <form onSubmit={handleSubmit} id="profile-form">
         <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
           <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="universityName">University Name</FieldLabel>
@@ -81,6 +95,7 @@ const StudentProfileForm = ({
               name="universityName"
               value={formData.universityName}
               onChange={handleChange}
+              required
             />
           </Field>
           <Field className="w-full max-w-xl">
@@ -90,11 +105,12 @@ const StudentProfileForm = ({
               name="collegeName"
               value={formData.collegeName}
               onChange={handleChange}
+              required
             />
           </Field>
         </FieldGroup>
 
-        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between  items-stretch">
+        <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
           <Field className="w-full max-w-xl">
             <FieldLabel htmlFor="majorName">Major Name</FieldLabel>
             <Input
@@ -102,6 +118,7 @@ const StudentProfileForm = ({
               name="majorName"
               value={formData.majorName}
               onChange={handleChange}
+              required
             />
           </Field>
           <Field className="w-full max-w-xl">
@@ -111,6 +128,7 @@ const StudentProfileForm = ({
               name="currentSem"
               value={formData.currentSem}
               onChange={handleChange}
+              required
             />
           </Field>
         </FieldGroup>
@@ -123,7 +141,8 @@ const StudentProfileForm = ({
               name="startYear"
               value={formData.startYear}
               onChange={handleChange}
-              placeholder="YYYY"
+              pattern="\d{4}"
+              required
             />
           </Field>
           <Field className="w-full max-w-xl">
@@ -133,16 +152,11 @@ const StudentProfileForm = ({
               name="gradYear"
               value={formData.gradYear}
               onChange={handleChange}
-              placeholder="YYYY"
+              pattern="\d{4}"
+              required
             />
           </Field>
         </FieldGroup>
-
-        <Field className="flex items-center mt-4">
-          <Button type="submit" disabled={isLoading} className="max-w-[150px]">
-            {isLoading ? <Spinner /> : "Save"}
-          </Button>
-        </Field>
       </form>
     </div>
   );

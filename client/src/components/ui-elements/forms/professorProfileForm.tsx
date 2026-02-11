@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectTrigger,
@@ -11,8 +10,6 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
-import axios from "axios";
 import { toast } from "sonner";
 import { createProfile, editProfile } from "@/lib/api";
 
@@ -25,13 +22,17 @@ interface ProfessorProfile {
   joiningYear?: string;
 }
 
+interface ProfessorProfileFormProps {
+  className?: string;
+  existingData?: ProfessorProfile;
+  onSuccess?: () => void;
+}
+
 export default function ProfessorProfileForm({
   className,
   existingData,
-}: {
-  className?: string;
-  existingData?: ProfessorProfile;
-}) {
+  onSuccess,
+}: ProfessorProfileFormProps) {
   const [formData, setFormData] = useState<ProfessorProfile>({
     universityName: "",
     collegeName: "",
@@ -40,6 +41,7 @@ export default function ProfessorProfileForm({
     employmentType: "",
     joiningYear: "",
   });
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -55,18 +57,33 @@ export default function ProfessorProfileForm({
     setIsLoading(true);
 
     try {
+      const payload = {
+        universityName: formData.universityName,
+        collegeName: formData.collegeName,
+        department: formData.department,
+        designation: formData.designation,
+        employmentType: formData.employmentType,
+        joiningYear: Number(formData.joiningYear),
+      };
+
       let res;
-      if (existingData) {
-        res = await editProfile(formData);
-        toast.success("Profile updated successfully!");
-      } else {
-        res = await createProfile(formData);
-        toast.success("Profile created successfully!");
+
+      try {
+        res = await createProfile(payload);
+        toast.success("Profile saved successfully!");
+      } catch (err: any) {
+        if (err?.response?.status === 409) {
+          res = await editProfile(payload);
+          toast.success("Profile updated successfully!");
+        } else {
+          throw err;
+        }
       }
 
       setFormData(res.data.data);
+
+      if (onSuccess) onSuccess();
     } catch (err: any) {
-      console.error(err);
       toast.error(err?.response?.data?.message || "Error saving profile");
     } finally {
       setIsLoading(false);
@@ -74,13 +91,8 @@ export default function ProfessorProfileForm({
   };
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-8 space-x-10 w-full md:max-w-7xl",
-        className
-      )}
-    >
-      <form onSubmit={handleSubmit}>
+    <div className={cn("flex flex-col gap-8 w-full md:max-w-7xl", className)}>
+      <form onSubmit={handleSubmit} id="profile-form">
         <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
           <Field className="w-full max-w-xl">
             <FieldLabel>University Name</FieldLabel>
@@ -88,6 +100,7 @@ export default function ProfessorProfileForm({
               name="universityName"
               value={formData.universityName}
               onChange={handleChange}
+              required
             />
           </Field>
           <Field className="w-full max-w-xl">
@@ -96,17 +109,19 @@ export default function ProfessorProfileForm({
               name="collegeName"
               value={formData.collegeName}
               onChange={handleChange}
+              required
             />
           </Field>
         </FieldGroup>
 
         <FieldGroup className="flex flex-col sm:flex-row gap-2 justify-between items-stretch">
           <Field className="w-full max-w-xl">
-            <FieldLabel>Department / Subject Area</FieldLabel>
+            <FieldLabel>Department</FieldLabel>
             <Input
               name="department"
               value={formData.department}
               onChange={handleChange}
+              required
             />
           </Field>
           <Field className="w-full max-w-xl">
@@ -115,6 +130,7 @@ export default function ProfessorProfileForm({
               name="designation"
               value={formData.designation}
               onChange={handleChange}
+              required
             />
           </Field>
         </FieldGroup>
@@ -125,8 +141,9 @@ export default function ProfessorProfileForm({
             <Input
               name="joiningYear"
               value={formData.joiningYear}
-              placeholder="YYYY"
               onChange={handleChange}
+              pattern="\d{4}"
+              required
             />
           </Field>
           <Field className="w-full max-w-xl">
@@ -136,24 +153,19 @@ export default function ProfessorProfileForm({
               onValueChange={(val) =>
                 setFormData((prev) => ({ ...prev, employmentType: val }))
               }
+              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="full-time">Full-time</SelectItem>
+                <SelectItem value="full_time">Full-time</SelectItem>
                 <SelectItem value="visiting">Visiting</SelectItem>
                 <SelectItem value="contract">Contract</SelectItem>
               </SelectContent>
             </Select>
           </Field>
         </FieldGroup>
-
-        <Field className="flex items-center mt-4">
-          <Button type="submit" disabled={isLoading} className="max-w-[150px]">
-            {isLoading ? <Spinner /> : "Save"}
-          </Button>
-        </Field>
       </form>
     </div>
   );

@@ -27,18 +27,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const hydrateFromSession = async () => {
     try {
       const resp = await getCurrentUser();
-      const u = resp?.data?.user;
+      console.log("🔍 API Response:", resp?.data); 
+
+      const u = resp?.data?.data?.user; 
 
       if (!u) throw new Error("No user");
+
+      const role =
+        u.role ||
+        localStorage.getItem("auth_role") ||
+        localStorage.getItem("pending_role");
+
+      console.log("User data:", u); 
+      console.log(" Role:", role); 
 
       setIsLoggedIn(true);
       setUser({
         email: u.email,
         name: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
-        id: u.id,
-        role: u.role,
+        id: u.userId || u.id,
+        role: role,
       });
-    } catch {
+
+      if (role) {
+        localStorage.setItem("auth_role", role);
+      }
+    } catch (error) {
+      console.error(" Hydration error:", error);
       setIsLoggedIn(false);
       setUser(null);
     }
@@ -48,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     hydrateFromSession();
   }, []);
 
-  const login = () => {
+  const login = async () => {
     hydrateFromSession();
   };
 
@@ -56,6 +71,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await logoutUser();
     } catch {}
+
+
+    localStorage.removeItem("auth_role");
+    localStorage.removeItem("pending_role");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userPhone");
 
     setIsLoggedIn(false);
     setUser(null);

@@ -75,11 +75,12 @@ export function LoginForm({
       }
 
       if (loginSuccessful) {
-        login();
         localStorage.setItem("auth_role", role);
+        await login(); 
         toast.success("Logged in successfully");
         router.push("/dashboard");
       }
+
     } catch (error: any) {
       toast.error(
         error?.response?.data?.message || "Invalid email or password",

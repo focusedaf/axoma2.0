@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button-1";
 import { FileIcon, PlusIcon, TriangleAlert, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
+import { addDocuments } from "@/lib/api";
 
 function formatBytes(bytes: number): string {
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -85,39 +86,28 @@ const VerifyDocsForm = ({
     const type = file instanceof File ? file.type : file.type;
     return type.startsWith("image/");
   };
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
 
   const handleCloudinaryUpload = async () => {
     setIsLoading(true);
+
     try {
-      // Your Cloudinary upload logic here
       const formData = new FormData();
+
       files.forEach((fileItem) => {
         if (fileItem.file instanceof File) {
-          formData.append("files", fileItem.file);
+          formData.append("id_card", fileItem.file);
         }
       });
 
-      // Example API call - replace with your actual endpoint
-      const response = await fetch("/api/upload-to-cloudinary", {
-        method: "POST",
-        body: formData,
-      });
+      await addDocuments(formData);
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await response.json();
-      setUploadedUrls(data.urls); // Store the uploaded URLs
-      
-      // Optionally show success message
-      console.log("Upload successful:", data);
+      setUploadedUrls(["success"]);
+      console.log("Upload successful");
     } catch (error) {
       console.error("Upload error:", error);
-      // Handle error - maybe set an error state
     } finally {
       setIsLoading(false);
     }
@@ -132,118 +122,118 @@ const VerifyDocsForm = ({
             "flex flex-1 items-center gap-3 rounded-lg border border-border border-dashed p-4 transition-colors",
             isDragging
               ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50"
+              : "border-muted-foreground/25 hover:border-muted-foreground/50",
           )}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-        <input {...getInputProps()} className="sr-only" />
+          <input {...getInputProps()} className="sr-only" />
 
-        {/* Add Files Button */}
-        <Button
-          onClick={openFileDialog}
-          size="sm"
-          className={cn(isDragging && "animate-bounce")}
-        >
-          <PlusIcon className="h-4 w-4" />
-          Add files
-        </Button>
+          {/* Add Files Button */}
+          <Button
+            onClick={openFileDialog}
+            size="sm"
+            className={cn(isDragging && "animate-bounce")}
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add files
+          </Button>
 
-        {/* File Previews */}
-        <div className="flex flex-1 items-center gap-2 overflow-x-auto">
-          {files.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Drop files here or click to browse (max {maxFiles} files)
-            </p>
-          ) : (
-            files.map((fileItem) => (
-              <div key={fileItem.id} className="group shrink-0">
-                {/* File Preview */}
-                <div className="relative">
-                  {isImage(fileItem.file) && fileItem.preview ? (
-                    <img
-                      src={fileItem.preview}
-                      alt={fileItem.file.name}
-                      className="h-12 w-12 rounded-lg border object-cover"
-                      title={`${fileItem.file.name} (${formatBytes(
-                        fileItem.file.size
-                      )})`}
-                    />
-                  ) : (
-                    <div
-                      className="flex h-12 w-12 items-center justify-center rounded-lg border bg-muted"
-                      title={`${fileItem.file.name} (${formatBytes(
-                        fileItem.file.size
-                      )})`}
+          {/* File Previews */}
+          <div className="flex flex-1 items-center gap-2 overflow-x-auto">
+            {files.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Drop files here or click to browse (max {maxFiles} files)
+              </p>
+            ) : (
+              files.map((fileItem) => (
+                <div key={fileItem.id} className="group shrink-0">
+                  {/* File Preview */}
+                  <div className="relative">
+                    {isImage(fileItem.file) && fileItem.preview ? (
+                      <img
+                        src={fileItem.preview}
+                        alt={fileItem.file.name}
+                        className="h-12 w-12 rounded-lg border object-cover"
+                        title={`${fileItem.file.name} (${formatBytes(
+                          fileItem.file.size,
+                        )})`}
+                      />
+                    ) : (
+                      <div
+                        className="flex h-12 w-12 items-center justify-center rounded-lg border bg-muted"
+                        title={`${fileItem.file.name} (${formatBytes(
+                          fileItem.file.size,
+                        )})`}
+                      >
+                        <FileIcon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+
+                    {/* Remove Button */}
+                    <Button
+                      onClick={() => removeFile(fileItem.id)}
+                      variant="destructive"
+                      size="icon"
+                      className="size-5 border-2 border-background absolute -right-2 -top-2 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
                     >
-                      <FileIcon className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  )}
-
-                  {/* Remove Button */}
-                  <Button
-                    onClick={() => removeFile(fileItem.id)}
-                    variant="destructive"
-                    size="icon"
-                    className="size-5 border-2 border-background absolute -right-2 -top-2 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <XIcon className="size-3" />
-                  </Button>
+                      <XIcon className="size-3" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))
+            )}
+          </div>
+
+          {/* File Count */}
+          {files.length > 0 && (
+            <div className="shrink-0 text-xs text-muted-foreground">
+              {files.length}/{maxFiles}
+            </div>
           )}
         </div>
 
-        {/* File Count */}
+        {/* Upload Button - only show when files are selected */}
         {files.length > 0 && (
-          <div className="shrink-0 text-xs text-muted-foreground">
-            {files.length}/{maxFiles}
-          </div>
+          <Button
+            onClick={handleCloudinaryUpload}
+            disabled={isLoading || uploadedUrls.length > 0}
+            className="mt-4 max-w-[200px]"
+          >
+            {isLoading ? (
+              <>
+                <Spinner className="mr-2" />
+                Uploading
+              </>
+            ) : uploadedUrls.length > 0 ? (
+              `✓ ${files.length} file${files.length > 1 ? "s" : ""} uploaded`
+            ) : (
+              `Upload ${files.length} file${files.length > 1 ? "s" : ""}`
+            )}
+          </Button>
+        )}
+
+        {/* Error Messages */}
+        {errors.length > 0 && (
+          <Alert variant="destructive" appearance="light" className="mt-5">
+            <AlertIcon>
+              <TriangleAlert />
+            </AlertIcon>
+            <AlertContent>
+              <AlertTitle>File upload error(s)</AlertTitle>
+              <AlertDescription>
+                {errors.map((error, index) => (
+                  <p key={index} className="last:mb-0">
+                    {error}
+                  </p>
+                ))}
+              </AlertDescription>
+            </AlertContent>
+          </Alert>
         )}
       </div>
-
-      {/* Upload Button - only show when files are selected */}
-      {files.length > 0 && (
-        <Button
-          onClick={handleCloudinaryUpload}
-          disabled={isLoading || uploadedUrls.length > 0}
-          className="mt-4 max-w-[200px]"
-        >
-          {isLoading ? (
-            <>
-              <Spinner className="mr-2" />
-              Uploading
-            </>
-          ) : uploadedUrls.length > 0 ? (
-            `✓ ${files.length} file${files.length > 1 ? 's' : ''} uploaded`
-          ) : (
-            `Upload ${files.length} file${files.length > 1 ? 's' : ''}`
-          )}
-        </Button>
-      )}
-
-      {/* Error Messages */}
-      {errors.length > 0 && (
-        <Alert variant="destructive" appearance="light" className="mt-5">
-          <AlertIcon>
-            <TriangleAlert />
-          </AlertIcon>
-          <AlertContent>
-            <AlertTitle>File upload error(s)</AlertTitle>
-            <AlertDescription>
-              {errors.map((error, index) => (
-                <p key={index} className="last:mb-0">
-                  {error}
-                </p>
-              ))}
-            </AlertDescription>
-          </AlertContent>
-        </Alert>
-      )}
-    </div>
     </div>
   );
 };

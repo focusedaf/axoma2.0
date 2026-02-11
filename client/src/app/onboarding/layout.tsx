@@ -28,7 +28,7 @@ export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
           totalSteps: 4,
           hideBack: false,
           nextLabel: "Continue",
-          nextRoute: "/onboarding/verify-document",
+          nextRoute: null,
         };
       case "/onboarding/verify-document":
         return {
@@ -64,7 +64,13 @@ export default function OnboardingLayout({ children }: OnboardingLayoutProps) {
   };
 
   const handleNext = () => {
-    router.push(nextRoute);
+    if (pathname === "/onboarding/profile") {
+      if ((window as any).submitProfileForm) {
+        (window as any).submitProfileForm();
+      }
+    } else if (nextRoute) {
+      router.push(nextRoute);
+    }
   };
 
   return (

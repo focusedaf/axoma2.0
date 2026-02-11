@@ -27,6 +27,27 @@ export const primaryApi = axios.create({
   },
 });
 
+primaryApi.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        await refreshToken();
+        return primaryApi(originalRequest);
+      } catch (refreshError) {
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
 export const registerStudent = (payload: any) =>
   primaryApi.post(
     endpoint(process.env.NEXT_PUBLIC_API_REGISTER_STUDENT),
@@ -86,17 +107,32 @@ export const resendEmailVerification = () =>
     endpoint(process.env.NEXT_PUBLIC_API_RESEND_EMAIL_VERIFICATION),
   );
 
-export const createProfile = (payload: any) =>
-  primaryApi.post(endpoint(process.env.NEXT_PUBLIC_API_SETUP_PROFILE), payload);
-
-export const getProfile = () =>
-  primaryApi.get(endpoint(process.env.NEXT_PUBLIC_API_GET_PROFILE));
+export const createProfile = async (payload: any) => {
+  try {
+    return await primaryApi.post(
+      endpoint(process.env.NEXT_PUBLIC_API_SETUP_PROFILE),
+      payload,
+    );
+  } catch (err: any) {
+    if (err.response?.status === 409) {
+      return await editProfile(payload);
+    }
+    throw err;
+  }
+};
 
 export const editProfile = (payload: any) =>
   primaryApi.post(endpoint(process.env.NEXT_PUBLIC_API_EDIT_PROFILE), payload);
 
-export const addDocuments = (payload: any) =>
-  primaryApi.post(endpoint(process.env.NEXT_PUBLIC_API_ADD_DOCS), payload);
+export const getProfile = () =>
+  primaryApi.get(endpoint(process.env.NEXT_PUBLIC_API_GET_PROFILE));
+
+export const addDocuments = (formData: FormData) =>
+  primaryApi.post(endpoint(process.env.NEXT_PUBLIC_API_ADD_DOCS), formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
 export const getDocuments = () =>
   primaryApi.get(endpoint(process.env.NEXT_PUBLIC_API_GET_DOCS));
