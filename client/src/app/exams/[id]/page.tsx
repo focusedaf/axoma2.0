@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import ExamHeader from "@/components/ui-elements/examInterface/examHeader";
 import Feed from "@/components/ui-elements/examInterface/feed";
 import QuestionCard from "@/components/ui-elements/examInterface/questionCard";
 import ExamSubmitted from "@/components/ui-elements/examInterface/examSubmitted";
 import { initAntiCheat, stopAntiCheat } from "@/lib/antiCheat";
 import { examStore, PublishedExam } from "@/lib/examStore";
-import { Question } from "@/types/exam";
 import { Card } from "@/components/ui/card";
+import { submissionStore } from "@/lib/submissionStore";
 
 export default function ExamInterface() {
   const params = useParams();
@@ -24,6 +25,16 @@ export default function ExamInterface() {
   const [isExamSubmitted, setIsExamSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  
+  const examRef = useRef<PublishedExam | null>(null);
+  const answersRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    examRef.current = exam;
+  }, [exam]);
+  useEffect(() => {
+    answersRef.current = selectedAnswers;
+  }, [selectedAnswers]);
+
   useEffect(() => {
     const loadedExam = examStore.getById(examId);
     if (!loadedExam) {
@@ -35,10 +46,18 @@ export default function ExamInterface() {
     setIsLoading(false);
   }, [examId, router]);
 
+  const handleSubmitExam = () => {
+    const currentExam = examRef.current;
+    if (!currentExam) return;
+    submissionStore.submit(currentExam, answersRef.current);
+    setIsExamSubmitted(true);
+    toast.success("Exam submitted successfully!");
+  };
+
   useEffect(() => {
     initAntiCheat(handleSubmitExam);
     return () => stopAntiCheat();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isExamSubmitted || !exam) return;
@@ -48,12 +67,7 @@ export default function ExamInterface() {
     }
     const timer = setInterval(() => setTimeRemaining((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeRemaining, isExamSubmitted, exam]);
-
-  const handleSubmitExam = () => {
-    setIsExamSubmitted(true);
-    console.log("Exam submitted with answers:", selectedAnswers);
-  };
+  }, [timeRemaining, isExamSubmitted, exam]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -61,7 +75,7 @@ export default function ExamInterface() {
     return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200">
         <Card className="p-8">
@@ -69,30 +83,12 @@ export default function ExamInterface() {
         </Card>
       </div>
     );
-  }
-
-  if (!exam) {
-    return null;
-  }
+  if (!exam) return null;
+  if (isExamSubmitted) return <ExamSubmitted />;
 
   const totalQuestions = exam.questions.length;
   const currentQuestion = exam.questions[currentQuestionIndex];
   const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-
-  const handleSelectAnswer = (option: string) => {
-    setSelectedAnswers({
-      ...selectedAnswers,
-      [currentQuestion.id]: option,
-    });
-  };
-
-  const handleNext = () => {
-    setCurrentQuestionIndex((prev) => Math.min(prev + 1, totalQuestions - 1));
-  };
-
-  const handlePrevious = () => {
-    setCurrentQuestionIndex((prev) => Math.max(prev - 1, 0));
-  };
 
   const displayQuestion = {
     id: currentQuestion.id,
@@ -104,8 +100,6 @@ export default function ExamInterface() {
     image: currentQuestion.image || null,
   };
 
-  if (isExamSubmitted) return <ExamSubmitted />;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 text-gray-800 p-6 md:p-10">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -114,7 +108,6 @@ export default function ExamInterface() {
           timeLeft={formatTime(timeRemaining)}
           onSubmit={handleSubmitExam}
         />
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="md:col-span-2">
             <QuestionCard
@@ -123,9 +116,20 @@ export default function ExamInterface() {
               totalQuestions={totalQuestions}
               progressPercent={progressPercent}
               selectedAnswers={selectedAnswers}
-              onSelectAnswer={handleSelectAnswer}
-              onPrevious={handlePrevious}
-              onNext={handleNext}
+              onSelectAnswer={(option) =>
+                setSelectedAnswers({
+                  ...selectedAnswers,
+                  [currentQuestion.id]: option,
+                })
+              }
+              onPrevious={() =>
+                setCurrentQuestionIndex((p) => Math.max(p - 1, 0))
+              }
+              onNext={() =>
+                setCurrentQuestionIndex((p) =>
+                  Math.min(p + 1, totalQuestions - 1),
+                )
+              }
             />
           </div>
           <div className="aspect-video">

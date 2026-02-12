@@ -103,7 +103,7 @@ export function ExamHistory({ exams }: ExamHistoryProps) {
                   <Button
                     size="sm"
                     onClick={() =>
-                      router.push(`/dashboard/professor/review-exam`)
+                      router.push(`/dashboard/professor/review-exam/${exam.id}`)
                     }
                   >
                     Review Exam

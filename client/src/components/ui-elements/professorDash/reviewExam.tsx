@@ -36,17 +36,11 @@ function formatConductedOn(date: Date) {
 }
 
 function getStatusVariant(status: ReviewExams["status"]) {
-  switch (status) {
-    case "Grading Complete":
-      return "default";
-    case "Pending Grading":
-      return "secondary";
-    default:
-      return "secondary";
-  }
+  return status === "Grading Complete" ? "default" : "secondary";
 }
 
 export function ReviewExam({ exams }: ReviewExamProps) {
+  const router = useRouter();
 
   return (
     <div className="border rounded-md">
@@ -64,7 +58,10 @@ export function ReviewExam({ exams }: ReviewExamProps) {
         <TableBody>
           {exams.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center">
+              <TableCell
+                colSpan={6}
+                className="text-center text-muted-foreground py-8"
+              >
                 No exams found.
               </TableCell>
             </TableRow>
@@ -92,21 +89,34 @@ export function ReviewExam({ exams }: ReviewExamProps) {
                 {exam.status === "Pending Grading" ? (
                   <Button
                     size="sm"
-                    onClick={() => {
-                      toast.success(`Downloading exam ${exam.title}`);
-                    }}
+                    onClick={() =>
+                      router.push(`/dashboard/professor/review-exam/${exam.id}`)
+                    }
                   >
-                    Download
+                    Grade
                   </Button>
                 ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      toast.success(`Results shared for ${exam.title}`);
-                    }}
-                  >
-                    Share Results
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/professor/review-exam/${exam.id}`,
+                        )
+                      }
+                    >
+                      View
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        toast.success(`Results shared for ${exam.title}`)
+                      }
+                    >
+                      Share Results
+                    </Button>
+                  </>
                 )}
               </TableCell>
             </TableRow>
