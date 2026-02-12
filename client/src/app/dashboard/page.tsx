@@ -18,9 +18,9 @@ export default function DashboardRedirect() {
     if (!user?.role) return;
 
     if (user.role === "student") {
-      router.replace("/student/dashboard");
+      router.replace("dashboard/student");
     } else if (user.role === "professor") {
-      router.replace("/professor/dashboard");
+      router.replace("dashboard/professor");
     }
   }, [user, isLoggedIn, router]);
 

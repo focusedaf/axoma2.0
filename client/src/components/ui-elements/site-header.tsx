@@ -38,7 +38,7 @@ export function SiteHeader() {
             <Button
               onClick={() => router.push("/dashboard/professor/create-exam")}
             >
-              Create Exam
+              <NotebookPen className="mr-2 h-4 w-4" /> Create Exam
             </Button>
 
             <Button
