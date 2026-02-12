@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,8 @@ const instructions = [
 
 export default function PreExamSetup() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const examId = searchParams.get("examId");
   const cameraRef = useRef<CaptureHandle>(null);
 
   const [approved, setApproved] = useState(false);
@@ -45,6 +47,10 @@ export default function PreExamSetup() {
 
   const handleUpload = async () => {
     if (!capturedImage) return;
+    if (!examId) {
+      toast.error("No exam selected");
+      return;
+    }
 
     setLoading(true);
 
@@ -61,13 +67,32 @@ export default function PreExamSetup() {
       if (!response.ok) throw new Error();
 
       toast.success("Verification successful. Redirecting...");
-      router.push("/exam");
+
+      // Redirect to the specific exam
+      router.push(`/exams/${examId}`);
     } catch {
       toast.error("Upload failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+  // Show error if no examId
+  if (!examId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <Card className="w-full max-w-md shadow-md p-8 text-center">
+          <CardTitle className="text-xl mb-4">No Exam Selected</CardTitle>
+          <p className="text-muted-foreground mb-6">
+            Please select an exam from your dashboard to continue.
+          </p>
+          <Button onClick={() => router.push("/dashboard/student/exams")}>
+            Go to Exams
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-6">

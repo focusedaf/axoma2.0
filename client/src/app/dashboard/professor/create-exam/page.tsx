@@ -15,6 +15,7 @@ import { Step2Questions } from "@/components/ui-elements/professorDash/step-2-qu
 import { Step3Preview } from "@/components/ui-elements/professorDash/step-3-preview";
 import { Step4Publish } from "@/components/ui-elements/professorDash/step-4-publish";
 import { toast } from "sonner";
+import { examStore } from "@/lib/examStore";
 
 export default function CreateExamPage() {
   const router = useRouter();
@@ -56,8 +57,9 @@ export default function CreateExamPage() {
       ...step1Form.getValues(),
     };
 
+    const savedDraft = examStore.saveDraft(draftData);
     toast.success("Draft saved successfully");
-    console.log("Exam saved as draft:", draftData);
+    console.log("Exam saved as draft:", savedDraft);
 
     setTimeout(() => {
       router.push("/dashboard/professor");
@@ -70,11 +72,12 @@ export default function CreateExamPage() {
       questions: examData.questions,
     };
 
+    const publishedExam = examStore.publish(finalExamData);
     toast.success("Exam published successfully");
-    console.log("Publishing exam:", finalExamData);
+    console.log("Publishing exam:", publishedExam);
 
     setTimeout(() => {
-      router.push("/dashboard/professor");
+      router.push("/dashboard/professor"); // Fixed: Goes back to professor dashboard
     }, 800);
   };
 

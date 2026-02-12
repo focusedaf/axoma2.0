@@ -1,14 +1,18 @@
-import React from 'react'
+import React from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
 interface QuestionOptionsProps {
-  question: { id: number; questionText: string; options: string[] };
+  question: { id: string; questionText: string; options: string[] };
   selectedOption: string | undefined;
   onSelectAnswer: (option: string) => void;
 }
 
-const QuestionOptions = ({ question, selectedOption, onSelectAnswer }:QuestionOptionsProps) => {
+const QuestionOptions = ({
+  question,
+  selectedOption,
+  onSelectAnswer,
+}: QuestionOptionsProps) => {
   return (
     <RadioGroup
       value={selectedOption}
@@ -46,4 +50,4 @@ const QuestionOptions = ({ question, selectedOption, onSelectAnswer }:QuestionOp
   );
 };
 
-export default QuestionOptions
+export default QuestionOptions;

@@ -50,6 +50,10 @@ function getStatusVariant(status: Exam["status"]) {
 export function ExamSchedule({ exams }: ExamScheduleProps) {
   const router = useRouter();
 
+  const handleTakeExam = (examId: string) => {
+    router.push(`/guidelines?examId=${examId}`);
+  };
+
   return (
     <div className="border rounded-md">
       <Table className="text-center">
@@ -66,7 +70,10 @@ export function ExamSchedule({ exams }: ExamScheduleProps) {
         <TableBody>
           {exams.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center">
+              <TableCell
+                colSpan={6}
+                className="text-center text-muted-foreground py-8"
+              >
                 No exams scheduled.
               </TableCell>
             </TableRow>
@@ -100,7 +107,7 @@ export function ExamSchedule({ exams }: ExamScheduleProps) {
                 <Button
                   size="sm"
                   disabled={exam.status !== "Live"}
-                  onClick={() => router.push(`/guidelines`)}
+                  onClick={() => handleTakeExam(exam.id)}
                 >
                   Take Exam
                 </Button>
