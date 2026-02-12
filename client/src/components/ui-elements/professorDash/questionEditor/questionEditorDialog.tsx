@@ -42,6 +42,7 @@ export default function QuestionEditorDialog({
               isCorrect: o.isCorrect,
             }))
           : [],
+      answer: data.answer || "",
     };
 
     onSave(question);

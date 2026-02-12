@@ -37,7 +37,7 @@ export function Step3Preview({ examData }: Step3PreviewProps) {
 
         <div className="space-y-6">
           {questions.map((q, index) => (
-            <div key={q.id}>
+            <div key={q.id} className="space-y-3">
               <div className="flex justify-between items-start mb-2">
                 <p className="font-semibold text-lg">
                   {index + 1}. {q.text}
@@ -45,19 +45,23 @@ export function Step3Preview({ examData }: Step3PreviewProps) {
                 <Badge variant="outline">{q.marks} mks</Badge>
               </div>
 
+              
+              {q.image && (
+                <div className="ml-6">
+                  <img
+                    src={q.image}
+                    alt="Question"
+                    className="max-h-48 rounded border"
+                  />
+                </div>
+              )}
+
               {examType === "mcq" && q.options?.length ? (
                 <ul className="pl-5 space-y-2">
                   {q.options.map((opt) => (
                     <li key={opt.id} className="flex items-center gap-3">
                       <span className="h-5 w-5 border border-muted-foreground rounded-full block" />
-                      <span
-                        className={
-                          opt.isCorrect ? "font-bold text-primary" : ""
-                        }
-                      >
-                        {opt.text}
-                        {opt.isCorrect && " (Correct Answer)"}
-                      </span>
+                      <span>{opt.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -65,7 +69,7 @@ export function Step3Preview({ examData }: Step3PreviewProps) {
                 <p className="text-muted-foreground">No options provided.</p>
               ) : (
                 <div className="p-4 border border-dashed rounded-md mt-4">
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     (Space for descriptive answer)
                   </p>
                 </div>

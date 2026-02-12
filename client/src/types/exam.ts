@@ -31,6 +31,7 @@ export type Question = {
   type: "mcq" | "descriptive";
   options?: QuestionOption[];
   image?: string | null;
+   answer?: string;
 };
 
 // --- Combined Exam Data ---
