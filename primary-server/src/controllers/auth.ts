@@ -436,24 +436,25 @@ export const professorLogin = async (req: Request, res: Response) => {
 export const me = async (req: AuthenticatedRequest, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     return res.status(200).json({
       success: true,
       data: {
-        user: req.user,
+        user: {
+          id: req.user.userId,
+          email: req.user.email,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          role: req.user.role,
+        },
       },
     });
   } catch (error) {
-    console.error("Me endpoint error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
 
