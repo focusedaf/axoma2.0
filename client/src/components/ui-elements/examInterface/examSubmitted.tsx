@@ -17,7 +17,7 @@ const ExamSubmitted = () => {
         </p>
         <Button
           onClick={() => router.push("/dashboard/student/exams")}
-          className="w-1/2 bg-gray-900 hover:bg-black"
+          className="w-full bg-gray-900 hover:bg-black"
         >
           Go to Dashboard
         </Button>

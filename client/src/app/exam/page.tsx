@@ -4,41 +4,64 @@ import ExamHeader from "@/components/ui-elements/examInterface/examHeader";
 import Feed from "@/components/ui-elements/examInterface/feed";
 import QuestionCard from "@/components/ui-elements/examInterface/questionCard";
 import ExamSubmitted from "@/components/ui-elements/examInterface/examSubmitted";
-import { initAntiCheat } from "@/lib/antiCheat";
+import { initAntiCheat,stopAntiCheat } from "@/lib/antiCheat";
 interface Question {
   id: number;
   questionText: string;
   options: string[];
   correctAnswer: string;
 }
+
 const MOCK_QUESTIONS: Question[] = [
   {
     id: 1,
-    questionText: "Which of the following is a hydrocarbon?",
-    options: ["Argon", "Krypton", "Carbon", "Oxygen"],
-    correctAnswer: "Carbon",
+    questionText: "Which OSI layer is responsible for routing packets?",
+    options: [
+      "Data Link Layer",
+      "Network Layer",
+      "Transport Layer",
+      "Session Layer",
+    ],
+    correctAnswer: "Network Layer",
   },
   {
     id: 2,
-    questionText: "What is the chemical formula for water?",
-    options: ["H2O", "CO2", "O2", "CH4"],
-    correctAnswer: "H2O",
+    questionText: "Which protocol is used to assign IP addresses dynamically?",
+    options: ["DNS", "DHCP", "ARP", "HTTP"],
+    correctAnswer: "DHCP",
   },
   {
     id: 3,
-    questionText: "Which planet is known as the Red Planet?",
-    options: ["Earth", "Mars", "Jupiter", "Saturn"],
-    correctAnswer: "Mars",
+    questionText: "Which device operates at Layer 2 of the OSI model?",
+    options: ["Router", "Switch", "Firewall", "Modem"],
+    correctAnswer: "Switch",
   },
   {
     id: 4,
-    questionText: "What is the main component of Earth's atmosphere?",
-    options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Argon"],
-    correctAnswer: "Nitrogen",
+    questionText: "What does TCP provide that UDP does not?",
+    options: [
+      "Faster transmission",
+      "Connectionless communication",
+      "Reliability and error correction",
+      "Broadcast capability",
+    ],
+    correctAnswer: "Reliability and error correction",
+  },
+  {
+    id: 5,
+    questionText: "What is the default port number for HTTPS?",
+    options: ["80", "443", "21", "25"],
+    correctAnswer: "443",
+  },
+  {
+    id: 6,
+    questionText: "Which protocol resolves domain names to IP addresses?",
+    options: ["FTP", "DNS", "SMTP", "ICMP"],
+    correctAnswer: "DNS",
   },
 ];
 
-const EXAM_DURATION_MINUTES = 25;
+const EXAM_DURATION_MINUTES = 5;
 
 export default function ExamInterface() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -46,7 +69,7 @@ export default function ExamInterface() {
     Record<number, string>
   >({});
   const [timeRemaining, setTimeRemaining] = useState(
-    EXAM_DURATION_MINUTES * 60
+    EXAM_DURATION_MINUTES * 60,
   );
   const [isExamSubmitted, setIsExamSubmitted] = useState(false);
 
@@ -57,8 +80,13 @@ export default function ExamInterface() {
   const progressPercent = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
   useEffect(() => {
-    initAntiCheat();
+    initAntiCheat(handleSubmitExam);
+
+    return () => {
+      stopAntiCheat();
+    };
   }, []);
+
 
   // Webcam setup
   useEffect(() => {
@@ -113,35 +141,37 @@ export default function ExamInterface() {
     const secs = seconds % 60;
     return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(
       2,
-      "0"
+      "0",
     )}`;
   };
 
   if (isExamSubmitted) return <ExamSubmitted />;
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-100 text-gray-800 font-sans p-4 md:p-6 lg:p-8">
-      <ExamHeader
-        examTitle="Organic Chemistry"
-        timeLeft={formatTime(timeRemaining)}
-        onSubmit={handleSubmitExam}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 text-gray-800 p-6 md:p-10">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <ExamHeader
+          examTitle="Organic Chemistry"
+          timeLeft={formatTime(timeRemaining)}
+          onSubmit={handleSubmitExam}
+        />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="md:col-span-2">
-          <QuestionCard
-            currentQuestion={currentQuestion}
-            currentQuestionIndex={currentQuestionIndex}
-            totalQuestions={totalQuestions}
-            progressPercent={progressPercent}
-            selectedAnswers={selectedAnswers}
-            onSelectAnswer={handleSelectAnswer}
-            onPrevious={handlePrevious}
-            onNext={handleNext}
-          />
-        </div>
-        <div className="aspect-video">
-          <Feed videoRef={videoRef} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="md:col-span-2">
+            <QuestionCard
+              currentQuestion={currentQuestion}
+              currentQuestionIndex={currentQuestionIndex}
+              totalQuestions={totalQuestions}
+              progressPercent={progressPercent}
+              selectedAnswers={selectedAnswers}
+              onSelectAnswer={handleSelectAnswer}
+              onPrevious={handlePrevious}
+              onNext={handleNext}
+            />
+          </div>
+          <div className="aspect-video">
+            <Feed />
+          </div>
         </div>
       </div>
     </div>

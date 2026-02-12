@@ -1,76 +1,52 @@
 "use client";
+
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Capture, type CaptureHandle } from "./capture";
-import {
-  Loader2,
-  CheckCircle,
-  AlertTriangle,
-  Camera,
-  Upload,
-} from "lucide-react";
+import { toast } from "sonner";
+import { Camera, Loader2, Upload } from "lucide-react";
 
-const CLOUDINARY_CLOUD_NAME = "";
-const CLOUDINARY_UPLOAD_PRESET = "";
+const CLOUDINARY_CLOUD_NAME = "dfu2kgodh";
+const CLOUDINARY_UPLOAD_PRESET = "preexam_upload";
 
 const instructions = [
-  "There should be proper lighting in the room",
-  "Face should not be covered with anything",
-  "Don't wear anything that can cause glare in the images",
-  "Position yourself directly in front of the camera, maintaining eye level",
-  "Ensure stable internet connection - test beforehand to avoid disconnections",
+  "Ensure proper lighting in the room.",
+  "Your face must be clearly visible and uncovered.",
+  "Avoid wearing glasses or accessories that cause glare.",
+  "Sit directly in front of the camera at eye level.",
+  "Ensure stable internet connection before starting.",
+  "Do not switch tabs or minimize the browser during the exam.",
+  "Keep your camera enabled throughout the examination.",
+  "Ensure no other person is present in the room.",
 ];
 
-enum CaptureState {
-  Idle,
-  Captured,
-  Uploading,
-  Success,
-  Error,
-}
-
-const PreExamSetup = () => {
+export default function PreExamSetup() {
+  const router = useRouter();
   const cameraRef = useRef<CaptureHandle>(null);
 
-  const [captureState, setCaptureState] = useState(CaptureState.Idle);
+  const [approved, setApproved] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const [uploadSuccessUrl, setUploadSuccessUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleCapture = async () => {
-    setCapturedImage(null);
-    setError(null);
-    setUploadSuccessUrl(null);
-    setIsConfirmed(false);
-
     try {
       const imageDataUrl = await cameraRef.current?.capture();
-      if (!imageDataUrl)
-        throw new Error("Could not capture image from camera.");
+      if (!imageDataUrl) throw new Error();
       setCapturedImage(imageDataUrl);
-      setCaptureState(CaptureState.Captured);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An unknown error occurred.";
-      setError(errorMessage);
-      setCaptureState(CaptureState.Error);
+      toast.success("Image captured successfully");
+    } catch {
+      toast.error("Failed to capture image");
     }
   };
 
   const handleUpload = async () => {
-    if (!capturedImage) {
-      setError("No image to upload.");
-      setCaptureState(CaptureState.Error);
-      return;
-    }
-    setCaptureState(CaptureState.Uploading);
-    setError(null);
-    setUploadSuccessUrl(null);
+    if (!capturedImage) return;
+
+    setLoading(true);
 
     try {
       const formData = new FormData();
@@ -79,176 +55,95 @@ const PreExamSetup = () => {
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: "POST", body: formData }
+        { method: "POST", body: formData },
       );
 
-      if (!response.ok) throw new Error("Cloudinary upload failed.");
+      if (!response.ok) throw new Error();
 
-      const data = await response.json();
-      setUploadSuccessUrl(data.secure_url);
-      setCaptureState(CaptureState.Success);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An unknown error occurred.";
-      setError(errorMessage);
-      setCaptureState(CaptureState.Error);
+      toast.success("Verification successful. Redirecting...");
+      router.push("/exam");
+    } catch {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRetake = () => {
-    setCaptureState(CaptureState.Idle);
-    setCapturedImage(null);
-    setIsConfirmed(false);
-    setError(null);
-    setUploadSuccessUrl(null);
-  };
-
-  const isLoading = captureState === CaptureState.Uploading;
-  const showCamera = captureState === CaptureState.Idle || isLoading;
-
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
-      <Card className="w-full max-w-7xl mx-auto shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-background px-6">
+      <Card className="w-full max-w-4xl shadow-md">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold">
-            Instructions Before Beginning the Exam
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Before You Begin the Exam
           </CardTitle>
         </CardHeader>
+
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-            <div className="flex flex-col justify-between">
-              <ol className="list-decimal list-inside space-y-5 text-lg text-muted-foreground">
-                {instructions.map((instr, i) => (
-                  <li key={i}>{instr}</li>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Instructions */}
+            <div>
+              <ol className="list-decimal list-inside space-y-3 text-sm text-muted-foreground leading-relaxed">
+                {instructions.map((item, index) => (
+                  <li key={index}>{item}</li>
                 ))}
               </ol>
+
+              <div className="mt-6 flex items-center space-x-3">
+                <Checkbox
+                  id="approve"
+                  checked={approved}
+                  onCheckedChange={(val) => setApproved(val as boolean)}
+                />
+                <Label htmlFor="approve" className="text-sm">
+                  I have read and agree to follow the above guidelines.
+                </Label>
+              </div>
             </div>
 
-            
-            <div className="flex flex-col items-center justify-center relative">
-              <div className="w-full max-w-md relative">
-                <div className="relative  w-full rounded-lg  overflow-hidden">
-                  {(captureState === CaptureState.Idle || isLoading) && (
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-10 flex items-center justify-center">
-                      {captureState === CaptureState.Idle && (
-                        <p className="text-white font-semibold text-lg">
-                          Click Capture when ready
-                        </p>
-                      )}
-                      {isLoading && (
-                        <div className="flex flex-col items-center">
-                          <Loader2 className="h-10 w-10 animate-spin text-white mb-2" />
-                          <span className="text-white font-medium">
-                            Uploading...
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+            {/* Camera Section */}
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-full max-w-sm relative rounded-lg overflow-hidden border bg-muted">
+                {!approved && (
+                  <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-10 flex items-center justify-center text-center px-6">
+                    <p className="text-white text-sm">
+                      Please approve the guidelines to enable camera access.
+                    </p>
+                  </div>
+                )}
 
-                  {showCamera && <Capture ref={cameraRef} />}
-                  {capturedImage && !showCamera && (
-                    <img
-                      src={capturedImage}
-                      alt="Captured preview"
-                      className="w-200 h-100 object-cover"
-                    />
-                  )}
-
-               
-                  {captureState === CaptureState.Idle && (
-                    <Button
-                      size="lg"
-                      variant="secondary"
-                      onClick={handleCapture}
-                      className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2"
-                    >
-                      <Camera className="h-4 w-4" />
-                      Capture
-                    </Button>
-                  )}
-                </div>
+                <Capture ref={cameraRef} />
               </div>
 
-              
-              {captureState === CaptureState.Captured && (
-                <div className="w-full max-w-md mt-4 p-4 border rounded-lg bg-muted space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="terms"
-                      checked={isConfirmed}
-                      onCheckedChange={(checked) =>
-                        setIsConfirmed(checked as boolean)
-                      }
-                    />
-                    <Label htmlFor="terms" className="text-base">
-                      I confirm my image meets all the guidelines.
-                    </Label>
-                  </div>
-                  <div className="flex gap-4">
-                    <Button
-                      size="default"
-                      onClick={handleUpload}
-                      disabled={!isConfirmed}
-                      className="w-1/2"
-                    >
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload
-                    </Button>
-                    <Button
-                      size="default"
-                      variant="outline"
-                      onClick={handleRetake}
-                      className="w-1/2"
-                    >
-                      Retake
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-          
-              {captureState === CaptureState.Success && uploadSuccessUrl && (
-                <Alert
-                  variant="default"
-                  className="bg-green-50 border-green-300 text-green-800 mt-4"
+              <div className="mt-5 w-full max-w-sm space-y-3">
+                <Button
+                  onClick={handleCapture}
+                  disabled={!approved}
+                  className="w-full"
+                  variant="secondary"
                 >
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertTitle>Upload Successful!</AlertTitle>
-                  <AlertDescription className="break-all">
-                    Your image has been saved.
-                  </AlertDescription>
-                  <Button
-                    variant="link"
-                    onClick={handleRetake}
-                    className="p-0 h-auto mt-2 text-green-800"
-                  >
-                    Capture a new image
-                  </Button>
-                </Alert>
-              )}
+                  <Camera className="mr-2 h-4 w-4" />
+                  Capture Photo
+                </Button>
 
-           
-              {captureState === CaptureState.Error && error && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Upload Failed</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
+                {capturedImage && (
                   <Button
-                    variant="outline"
-                    onClick={handleRetake}
-                    className="mt-4"
+                    onClick={handleUpload}
+                    disabled={loading}
+                    className="w-full"
                   >
-                    Try Again
+                    {loading ? (
+                      <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" />
+                    )}
+                    Confirm & Continue
                   </Button>
-                </Alert>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default PreExamSetup;
+}

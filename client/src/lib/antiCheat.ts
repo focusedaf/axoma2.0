@@ -1,27 +1,59 @@
-export function initAntiCheat() {
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      alert("You switched tabs! Not allowed!");
+import { toast } from "sonner";
+
+let violationCount = 0;
+let intervalId: NodeJS.Timeout | null = null;
+
+let cleanupFunctions: (() => void)[] = [];
+
+export function initAntiCheat(onViolationLimit: () => void) {
+  const VIOLATION_LIMIT = 3;
+
+  const registerViolation = (reason: string) => {
+    violationCount++;
+
+    toast.error(`Violation detected: ${reason}`, {
+      description: `Warning ${violationCount}/${VIOLATION_LIMIT}`,
+    });
+
+    if (violationCount >= VIOLATION_LIMIT) {
+      toast.error("Exam auto-submitted due to multiple violations.");
+      onViolationLimit();
     }
-  });
+  };
 
-  window.addEventListener("blur", () => {
-    alert("You left the window! Not allowed!");
-  });
+  const handleVisibility = () => {
+    if (document.hidden) {
+      registerViolation("Tab switching detected");
+    }
+  };
+  document.addEventListener("visibilitychange", handleVisibility);
+  cleanupFunctions.push(() =>
+    document.removeEventListener("visibilitychange", handleVisibility),
+  );
 
-  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  const handleBlur = () => registerViolation("Window focus lost");
+  window.addEventListener("blur", handleBlur);
+  cleanupFunctions.push(() => window.removeEventListener("blur", handleBlur));
 
-  ["copy", "paste", "cut"].forEach((event) => {
-    document.addEventListener(event, (e) => e.preventDefault());
-  });
-
-  setInterval(() => {
+  intervalId = setInterval(() => {
     const threshold = 160;
     if (
       window.outerWidth - window.innerWidth > threshold ||
       window.outerHeight - window.innerHeight > threshold
     ) {
-      alert("DevTools detected!");
+      registerViolation("Developer tools detected");
     }
-  }, 1000);
+  }, 3000);
+}
+
+export function stopAntiCheat() {
+  cleanupFunctions.forEach((fn) => fn());
+  cleanupFunctions = [];
+
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+
+  violationCount = 0;
 }

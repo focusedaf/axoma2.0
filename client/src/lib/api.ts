@@ -6,7 +6,6 @@ if (!BASE_URL) {
   throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
 }
 
-
 const endpoint = (path?: string) => {
   if (!path) {
     throw new Error("API endpoint is undefined");
@@ -78,7 +77,6 @@ export const logoutUser = () =>
 export const refreshToken = () =>
   primaryApi.post(endpoint(process.env.NEXT_PUBLIC_API_REFRESH));
 
-
 export const generateOtp = (phoneNumber: string) =>
   primaryApi.post(endpoint(process.env.NEXT_PUBLIC_API_GENERATE_OTP), {
     phoneNumber,
@@ -90,8 +88,7 @@ export const verifyOtp = (phoneNumber: string, code: string) =>
     code,
   });
 
-
-export const sendEmailVerification = (email:string) =>
+export const sendEmailVerification = (email: string) =>
   primaryApi.post(
     endpoint(process.env.NEXT_PUBLIC_API_SEND_EMAIL_VERIFICATION),
     { email },
@@ -137,8 +134,15 @@ export const addDocuments = (formData: FormData) =>
 export const getDocuments = () =>
   primaryApi.get(endpoint(process.env.NEXT_PUBLIC_API_GET_DOCS));
 
-export const analyzeFrame = (payload: any) =>
-  primaryApi.post(endpoint(process.env.NEXT_PUBLIC_API_ANALYZE_FRAME), payload);
+export async function analyzeFrame(formData: FormData) {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const success = Math.random() > 0.1;
+  if (success) {
+    return { status: "ok", message: "Frame analyzed successfully" };
+  } else {
+    throw new Error("Mock AI proctoring failed");
+  }
+}
 
 export const uploadPreExam = (payload: any) =>
   primaryApi.post(
